@@ -16,6 +16,10 @@ class Configuration {
 	public static final float FRAME_SPEED = 70.0f;
 	public static final int BUTTON_PADDING = 8;
 
+	public static final long CLICK_THRESHOLD = 200;
+	public static final long LONG_CLICK_THRESHOLD = 400;
+	public static final float MOVEMENT_THRESHOLD = 10.0f;
+
 	private final int pauseColor;
 	private final int playColor;
 	private final int progressColor;

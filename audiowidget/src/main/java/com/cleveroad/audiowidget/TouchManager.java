@@ -11,10 +11,6 @@ import android.view.WindowManager;
  */
 class TouchManager implements View.OnTouchListener {
 
-	private static final long CLICK_THRESHOLD = 200;
-	private static final long LONG_CLICK_THRESHOLD = 400;
-	private static final float MOVEMENT_THRESHOLD = 10.0f;
-
 	private final View view;
 	private final WindowManager windowManager;
 	private final float[] bounds;
@@ -69,7 +65,7 @@ class TouchManager implements View.OnTouchListener {
 							callback.onLongClick(prevX, prevY);
 						}
 					}
-				}, LONG_CLICK_THRESHOLD);
+				}, Configuration.LONG_CLICK_THRESHOLD);
 				if (callback != null) {
 					callback.onTouched();
 				}
@@ -90,7 +86,7 @@ class TouchManager implements View.OnTouchListener {
 					l = bounds[0];
 					t = bounds[1];
 				}
-				movedFarEnough = Math.hypot(diffX, diffY) >= MOVEMENT_THRESHOLD;
+				movedFarEnough = Math.hypot(diffX, diffY) >= Configuration.MOVEMENT_THRESHOLD;
 				layoutParams.x = (int) l;
 				layoutParams.y = (int) t;
 				windowManager.updateViewLayout(view, layoutParams);
@@ -102,10 +98,10 @@ class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_UP: {
 				long curTime = System.currentTimeMillis();
 				long diff = curTime - onDownTimestamp;
-				if (diff <= LONG_CLICK_THRESHOLD) {
+				if (diff <= Configuration.LONG_CLICK_THRESHOLD) {
 					longClickCanceled = true;
 				}
-				if (diff <= CLICK_THRESHOLD) {
+				if (diff <= Configuration.CLICK_THRESHOLD) {
 					if (callback != null) {
 						callback.onClick(prevX, prevY);
 					}
