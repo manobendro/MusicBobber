@@ -1,6 +1,6 @@
 package com.cleveroad.audiowidget;
 
-import android.view.View;
+import android.content.Context;
 
 /**
  * Helpful utils class.
@@ -8,38 +8,6 @@ import android.view.View;
 class DrawableUtils {
 
 	private DrawableUtils() {}
-
-	/**
-	 * Trapeze function.
-	 * @param t current value
-	 * @param a value at <b>aT</b> point of time
-	 * @param aT first point
-	 * @param b value at <b>bT</b> point of time
-	 * @param bT second point
-	 * @param c value at <b>cT</b> point of time
-	 * @param cT third point
-	 * @param d value at <b>dT</b> point of time
-	 * @param dT forth point
-	 * @return calculated value
-	 */
-	public static float trapeze(float t, float a, float aT, float b, float bT, float c, float cT, float d, float dT) {
-		if (t < aT) {
-			return a;
-		}
-		if (t >= aT && t < bT) {
-			float norm = normalize(t, aT, bT);
-			return a + norm * (b - a);
-		}
-		if (t >= bT && t < cT) {
-			float norm = normalize(t, bT, cT);
-			return b + norm * (c - b);
-		}
-		if (t >= cT && t <= dT) {
-			float norm = normalize(t, cT, dT);
-			return c + norm * (d - c);
-		}
-		return d;
-	}
 
 	public static float customFunction(float t, float ... pairs) {
 		if (pairs.length == 0 || pairs.length % 2 != 0) {
@@ -77,18 +45,6 @@ class DrawableUtils {
 			return 1;
 		float t = (val - minVal) / (maxVal - minVal);
 		return t;
-	}
-
-	/**
-	 * Quadratic Bezier curve.
-	 * @param t time
-	 * @param p0 start point
-	 * @param p1 control point
-	 * @param p2 end point
-	 * @return point on Bezier curve at some time <code>t</code>
-	 */
-	public static float quad(float t, float p0, float p1, float p2) {
-		return (float) (p0 * Math.pow(1 - t, 2) + p1 * 2 * t * (1 - t) + p2 * t * t);
 	}
 
 	/**
@@ -169,11 +125,7 @@ class DrawableUtils {
 		return endValue + (startValue - endValue) * (1 - time);
 	}
 
-	public static float centerX(View view) {
-		return (view.getLeft() + view.getRight()) / 2f;
-	}
-
-	public static float centerY(View view) {
-		return (view.getTop() + view.getBottom()) / 2f;
+	public static float dpToPx(Context context, float dp) {
+		return dp * context.getResources().getDisplayMetrics().density;
 	}
 }

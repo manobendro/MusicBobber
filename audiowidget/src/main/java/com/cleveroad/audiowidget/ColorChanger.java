@@ -5,7 +5,7 @@ import android.graphics.Color;
 /**
  * Created by Александр on 25.02.2016.
  */
-public class ColorChanger {
+class ColorChanger {
 
 	private final float[] fromColorHsv;
 	private final float[] toColorHsv;

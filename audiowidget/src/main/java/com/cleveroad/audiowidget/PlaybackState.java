@@ -56,26 +56,26 @@ public class PlaybackState {
 		return this;
 	}
 
-	public void start() {
-		state(STATE_PLAYING);
+	public void start(Object initiator) {
+		state(STATE_PLAYING, initiator);
 	}
 
-	public void pause() {
-		state(STATE_PAUSED);
+	public void pause(Object initiator) {
+		state(STATE_PAUSED, initiator);
 	}
 
-	public void stop() {
-		state(STATE_STOPPED);
+	public void stop(Object initiator) {
+		state(STATE_STOPPED, initiator);
 		position(0);
 	}
 
-	private void state(int state) {
+	private void state(int state, Object initiator) {
 		if (this.state == state)
 			return;
 		int oldState = this.state;
 		this.state = state;
 		for (PlaybackStateListener listener : stateListeners) {
-			listener.onStateChanged(oldState, state);
+			listener.onStateChanged(oldState, state, initiator);
 		}
 	}
 
@@ -88,7 +88,7 @@ public class PlaybackState {
 
 	public interface PlaybackStateListener {
 
-		void onStateChanged(int oldState, int newState);
+		void onStateChanged(int oldState, int newState, Object initiator);
 
 		void onProgressChanged(int position, int duration, float percentage);
 	}

@@ -5,7 +5,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
 import android.view.Gravity;
@@ -47,7 +46,6 @@ public class AudioWidget {
 		Configuration configuration = new Configuration.Builder()
 				.context(context)
 				.playbackState(playbackState)
-				.handler(new Handler())
 				.random(new Random())
 				.playColor(playColor)
 				.pauseColor(pauseColor)
@@ -84,9 +82,13 @@ public class AudioWidget {
 			}
 		});
 		expandedWidgetManager.callback(new TouchManager.SimpleCallback() {
+
 			@Override
 			public void onClick(float x, float y) {
-				expandCollapseWidget.onClick(x, y);
+				WindowManager.LayoutParams params = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
+				float widgetX = x - params.x;
+				float widgetY = y - params.y;
+				expandCollapseWidget.onClick(widgetX, widgetY);
 			}
 
 			@Override
@@ -97,6 +99,20 @@ public class AudioWidget {
 			@Override
 			public boolean canBeTouched() {
 				return !expandCollapseWidget.isAnimationInProgress();
+			}
+
+			@Override
+			public void onMoved(float diffX, float diffY) {
+				super.onMoved(diffX, diffY);
+				WindowManager.LayoutParams widgetParams = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
+				WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
+				if (expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
+					params.x = (int) (widgetParams.x - radius);
+				} else {
+					params.x = (int) (widgetParams.x + width - height - radius);
+				}
+				params.y = widgetParams.y;
+				windowManager.updateViewLayout(playPauseButton, params);
 			}
 		});
 		expandCollapseWidget.onCollapseListener(() -> windowManager.removeView(expandCollapseWidget));
@@ -116,7 +132,7 @@ public class AudioWidget {
 		int x = params.x;
 		int y = params.y;
 		byte expandDirection;
-		if (x + params.width / 2f > size.x / 2) {
+		if (x + height > size.x / 2) {
 			expandDirection = ExpandCollapseWidget.DIRECTION_LEFT;
 		} else {
 			expandDirection = ExpandCollapseWidget.DIRECTION_RIGHT;

@@ -3,7 +3,7 @@ package com.cleveroad.audiowidget;
 /**
  * Created by Александр on 24.02.2016.
  */
-public class TimeInterval {
+class TimeInterval {
 
 	private long previous;
 	private long dt;

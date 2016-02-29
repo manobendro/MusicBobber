@@ -15,7 +15,7 @@ import java.util.TimerTask;
  * Created by Александр on 24.02.2016.
  */
 @SuppressLint("ViewConstructor")
-public class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener {
+class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
 
 	private static final float BUBBLE_MIN_SIZE = 10;
 	private static final float BUBBLE_MAX_SIZE = 20;
@@ -66,6 +66,7 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 		this.playDrawable = configuration.playDrawable().getConstantState().newDrawable();
 		this.pauseDrawable = configuration.pauseDrawable().getConstantState().newDrawable();
 		this.pauseDrawable.setAlpha(0);
+		this.playbackState.addPlaybackStateListener(this);
 	}
 
 	@Override
@@ -81,13 +82,13 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 						.fromColor(playingColor)
 						.toColor(pausedColor);
 				bubblesPaint.setColor(pausedColor);
-				playbackState.pause();
+				playbackState.pause(this);
 			} else {
 				colorChanger
 						.fromColor(pausedColor)
 						.toColor(playingColor);
 				bubblesPaint.setColor(playingColor);
-				playbackState.start();
+				playbackState.start(this);
 			}
 			startBubblesAnimation();
 		}
@@ -154,14 +155,19 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 		}
 
 		canvas.drawCircle(cx, cy, radius, buttonPaint);
+
 		int l = (int) (cx - radius + Configuration.BUTTON_PADDING);
 		int t = (int) (cy - radius + Configuration.BUTTON_PADDING);
 		int r = (int) (cx + radius - Configuration.BUTTON_PADDING);
 		int b = (int) (cy + radius - Configuration.BUTTON_PADDING);
-		playDrawable.setBounds(l, t, r, b);
-		pauseDrawable.setBounds(l, t, r, b);
-		playDrawable.draw(canvas);
-		pauseDrawable.draw(canvas);
+		if (animatingBubbles || playbackState.state() != PlaybackState.STATE_PLAYING) {
+			playDrawable.setBounds(l, t, r, b);
+			playDrawable.draw(canvas);
+		}
+		if (animatingBubbles || playbackState.state() == PlaybackState.STATE_PLAYING) {
+			pauseDrawable.setBounds(l, t, r, b);
+			pauseDrawable.draw(canvas);
+		}
 	}
 
 	private void setupTimer(long duration, Runnable runnable) {
@@ -182,12 +188,48 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 	}
 
 	@Override
-	public void onStateChanged(int oldState, int newState) {
+	public void onStateChanged(int oldState, int newState, Object initiator) {
+		if (initiator == this)
+			return;
+		if (newState == PlaybackState.STATE_PLAYING) {
+			buttonPaint.setColor(playingColor);
+			pauseDrawable.setAlpha(255);
+			playDrawable.setAlpha(0);
+		} else {
+			buttonPaint.setColor(pausedColor);
+			pauseDrawable.setAlpha(0);
+			playDrawable.setAlpha(255);
+		}
 		invalidate();
 	}
 
 	@Override
 	public void onProgressChanged(int position, int duration, float percentage) {
 
+	}
+
+	@Override
+	public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
+		float bLeft = left + radius;
+		float bTop = top + radius;
+		if (bLeft < 0) {
+			bLeft = 0;
+		}
+		if (bTop < 0) {
+			bTop = 0;
+		}
+		float size = radius * 2;
+		float bRight = bLeft + size;
+		float bBottom = bTop + size;
+		if (bRight > screenWidth) {
+			bRight = screenWidth;
+			bLeft = bRight - size;
+		}
+		if (bBottom > screenHeight) {
+			bBottom = screenHeight;
+			bTop = bBottom - size;
+		}
+		outBounds[0] = bLeft - radius;
+		outBounds[1] = bTop - radius;
 	}
 }

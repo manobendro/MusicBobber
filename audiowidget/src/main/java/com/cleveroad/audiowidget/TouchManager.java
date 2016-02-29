@@ -2,7 +2,6 @@ package com.cleveroad.audiowidget;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -10,7 +9,7 @@ import android.view.WindowManager;
 /**
  * Created by Александр on 26.02.2016.
  */
-public class TouchManager implements View.OnTouchListener {
+class TouchManager implements View.OnTouchListener {
 
 	private static final long CLICK_THRESHOLD = 200;
 	private static final long LONG_CLICK_THRESHOLD = 400;
@@ -18,6 +17,7 @@ public class TouchManager implements View.OnTouchListener {
 
 	private final View view;
 	private final WindowManager windowManager;
+	private final float[] bounds;
 	private final int rootWidth;
 	private final int rootHeight;
 
@@ -36,8 +36,10 @@ public class TouchManager implements View.OnTouchListener {
 		this.view.setOnTouchListener(this);
 		Context context = view.getContext().getApplicationContext();
 		this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-		rootWidth = context.getResources().getDisplayMetrics().widthPixels;
-		rootHeight = context.getResources().getDisplayMetrics().heightPixels;
+		this.rootWidth = context.getResources().getDisplayMetrics().widthPixels;
+		this.rootHeight = (int) (context.getResources().getDisplayMetrics().heightPixels - DrawableUtils.dpToPx(context, 25));
+
+		this.bounds = new float[2];
 	}
 
 	public TouchManager callback(Callback callback) {
@@ -68,6 +70,9 @@ public class TouchManager implements View.OnTouchListener {
 						}
 					}
 				}, LONG_CLICK_THRESHOLD);
+				if (callback != null) {
+					callback.onTouched();
+				}
 				return true;
 			}
 			case MotionEvent.ACTION_MOVE: {
@@ -78,27 +83,20 @@ public class TouchManager implements View.OnTouchListener {
 				float diffY = event.getRawY() - prevY;
 				float l = prevLeft + diffX;
 				float t = prevTop + diffY;
-//				if (l < 0) {
-//					l = 0;
-//				}
-//				if (t < 0) {
-//					t = 0;
-//				}
 				float r = l + layoutParams.width;
 				float b = t + layoutParams.height;
-//				if (rootWidth > 0 && r > rootWidth) {
-//					l = rootWidth - layoutParams.width;
-//				}
-//				if (rootHeight > 0 && b > rootHeight) {
-//					t = rootHeight - layoutParams.height;
-//				}
-				if (l < 0 || t < 0) {
-					Log.w("SHAPE", "Can't place shape in correct position. Root view is too small.");
+				if (view instanceof BoundsChecker) {
+					((BoundsChecker) view).checkBounds(l, t, r, b, rootWidth, rootHeight, bounds);
+					l = bounds[0];
+					t = bounds[1];
 				}
 				movedFarEnough = Math.hypot(diffX, diffY) >= MOVEMENT_THRESHOLD;
 				layoutParams.x = (int) l;
 				layoutParams.y = (int) t;
 				windowManager.updateViewLayout(view, layoutParams);
+				if (callback != null) {
+					callback.onMoved(diffX, diffY);
+				}
 				return true;
 			}
 			case MotionEvent.ACTION_UP: {
@@ -112,13 +110,15 @@ public class TouchManager implements View.OnTouchListener {
 						callback.onClick(prevX, prevY);
 					}
 				}
+				if (callback != null) {
+					callback.onReleased();
+				}
 				return true;
 			}
 			case MotionEvent.ACTION_OUTSIDE: {
 				if (callback != null) {
 					callback.onTouchOutside();
 				}
-				Log.d("TEST", "touched outside");
 				break;
 			}
 		}
@@ -137,6 +137,9 @@ public class TouchManager implements View.OnTouchListener {
 		void onClick(float x, float y);
 		void onLongClick(float x, float y);
 		void onTouchOutside();
+		void onTouched();
+		void onMoved(float diffX, float diffY);
+		void onReleased();
 		boolean canBeTouched();
 	}
 
@@ -158,8 +161,27 @@ public class TouchManager implements View.OnTouchListener {
 		}
 
 		@Override
+		public void onTouched() {
+
+		}
+
+		@Override
+		public void onMoved(float diffX, float diffY) {
+
+		}
+
+		@Override
+		public void onReleased() {
+
+		}
+
+		@Override
 		public boolean canBeTouched() {
 			return true;
 		}
+	}
+
+	interface BoundsChecker {
+		void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds);
 	}
 }

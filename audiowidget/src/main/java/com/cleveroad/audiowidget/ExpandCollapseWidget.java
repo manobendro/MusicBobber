@@ -18,7 +18,7 @@ import java.util.TimerTask;
  * Created by Александр on 25.02.2016.
  */
 @SuppressLint("ViewConstructor")
-public class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
+class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
 
 	static final byte DIRECTION_LEFT = 1;
 	static final byte DIRECTION_RIGHT = 2;
@@ -126,6 +126,7 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 		this.bubbleSizes = new float[TOTAL_BUBBLES_COUNT];
 		this.bubbleSpeeds = new float[TOTAL_BUBBLES_COUNT];
 		this.bubblePositions = new float[TOTAL_BUBBLES_COUNT * 2];
+		this.playbackState.addPlaybackStateListener(this);
 	}
 
 	@Override
@@ -173,54 +174,25 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 	}
 
 	private void drawMediaButtons(@NonNull Canvas canvas) {
-		boolean setDefault;
 		for (int i = 0; i < buttonBounds.length; i++) {
-			setDefault = false;
-			if (animatingExpand) {
-				if (DrawableUtils.isBetween(timeInterval.duration(), 0, EXPAND_POSITION_END_F) && i == INDEX_PLAY) {
-					drawables[INDEX_PLAY].setBounds(animationBounds[INDEX_PLAY]);
-					drawables[INDEX_PAUSE].setBounds(animationBounds[INDEX_PLAY]);
-				} else if (DrawableUtils.isBetween(timeInterval.duration(), EXPAND_ELEMENTS_START_F, EXPAND_ELEMENTS_END_F) && i != INDEX_PLAY) {
-					drawables[i].setBounds(animationBounds[i]);
-				} else {
-					setDefault = true;
-				}
-			} else if (animatingCollapse) {
-				if (DrawableUtils.isBetween(timeInterval.duration(), 0, COLLAPSE_ELEMENTS_END_F) && i != INDEX_PLAY) {
-					drawables[i].setBounds(animationBounds[i]);
-				} else if (DrawableUtils.isBetween(timeInterval.duration(), COLLAPSE_POSITION_START_F, COLLAPSE_POSITION_END_F) && i == INDEX_PLAY) {
-					drawables[INDEX_PLAY].setBounds(animationBounds[INDEX_PLAY]);
-					drawables[INDEX_PAUSE].setBounds(animationBounds[INDEX_PLAY]);
-				} else if (DrawableUtils.isBetween(timeInterval.duration(), COLLAPSE_ELEMENTS_END_F, COLLAPSE_DURATION_F) || timeInterval.duration() >= COLLAPSE_DURATION_F) {
-					if (expandDirection == DIRECTION_LEFT) {
-						drawables[INDEX_PLAY].setBounds(buttonBounds[INDEX_ALBUM]);
-						drawables[INDEX_PAUSE].setBounds(buttonBounds[INDEX_ALBUM]);
-					} else {
-						drawables[INDEX_PLAY].setBounds(buttonBounds[INDEX_PLATE]);
-						drawables[INDEX_PAUSE].setBounds(buttonBounds[INDEX_PLATE]);
-					}
-				} else {
-					animationBounds[INDEX_PLAY].setEmpty();
-					setDefault = true;
-				}
+			Rect bounds;
+			if (isAnimationInProgress()) {
+				bounds = animationBounds[i];
 			} else {
-				setDefault = true;
+				bounds = buttonBounds[i];
 			}
-			if (setDefault) {
-				drawables[i].setBounds(buttonBounds[i]);
-				if (i == INDEX_PLAY) {
-					drawables[INDEX_PAUSE].setBounds(buttonBounds[i]);
-				}
-			}
+			Drawable drawable;
 			if (i == INDEX_PLAY) {
 				if (playbackState.state() == PlaybackState.STATE_PLAYING) {
-					drawables[INDEX_PAUSE].draw(canvas);
+					drawable = drawables[INDEX_PAUSE];
 				} else {
-					drawables[INDEX_PLAY].draw(canvas);
+					drawable = drawables[INDEX_PLAY];
 				}
 			} else {
-				drawables[i].draw(canvas);
+				drawable = drawables[i];
 			}
+			drawable.setBounds(bounds);
+			drawable.draw(canvas);
 		}
 	}
 
@@ -360,6 +332,7 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 	}
 
 	private void expandCollapseElements(float time) {
+		int alpha = (int) DrawableUtils.between(time * 255, 0, 255);
 		for (int i = 0; i < buttonBounds.length; i++) {
 			Rect bounds = buttonBounds[i];
 			if (i != INDEX_PLAY) {
@@ -368,7 +341,7 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 				int cx = bounds.centerX();
 				int cy = bounds.centerY();
 				animationBounds[i].set((int) (cx - w), (int) (cy - h), (int) (cx + w), (int) (cy + h));
-				drawables[i].setAlpha((int) DrawableUtils.between(time * 255, 0, 255));
+				drawables[i].setAlpha(alpha);
 			}
 		}
 	}
@@ -416,7 +389,11 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 	}
 
 	private void onPlayPauseClicked() {
-
+		if (playbackState.state() != PlaybackState.STATE_PLAYING) {
+			playbackState.start(this);
+		} else {
+			playbackState.pause(this);
+		}
 	}
 
 	private void onNextClicked() {
@@ -515,7 +492,7 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 	}
 
 	@Override
-	public void onStateChanged(int oldState, int newState) {
+	public void onStateChanged(int oldState, int newState, Object initiator) {
 		invalidate();
 	}
 
@@ -528,6 +505,33 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 		this.collapseListener = collapseListener;
 		return this;
 	}
+
+	public byte expandDirection() {
+		return expandDirection;
+	}
+
+	//
+//	@Override
+//	public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
+//		float bLeft = left + radius;
+//		float bTop = top + radius;
+//		if (bLeft < 0) {
+//			bLeft = 0;
+//		}
+//		if (bTop < 0) {
+//			bTop = 0;
+//		}
+//		float bRight = bLeft + widgetHeight;
+//		float bBottom = bTop + widgetHeight;
+//		if (bRight > screenWidth) {
+//			bLeft = screenWidth - widgetHeight;
+//		}
+//		if (bBottom > screenHeight) {
+//			bTop = screenHeight - widgetHeight;
+//		}
+//		outBounds[0] = bLeft;
+//		outBounds[1] = bTop - radius;
+//	}
 
 	interface OnCollapseListener {
 		void onCollapsed();

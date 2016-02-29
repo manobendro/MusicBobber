@@ -2,7 +2,6 @@ package com.cleveroad.audiowidget;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 
@@ -11,13 +10,12 @@ import java.util.Random;
 /**
  * Created by Александр on 24.02.2016.
  */
-public class Configuration {
+class Configuration {
 
 	public static final long UPDATE_INTERVAL = 16;
 	public static final float FRAME_SPEED = 70.0f;
 	public static final int BUTTON_PADDING = 8;
 
-	private final Handler handler;
 	private final int pauseColor;
 	private final int playColor;
 	private final int progressColor;
@@ -31,13 +29,11 @@ public class Configuration {
 	private final Drawable nextDrawable;
 	private final Drawable plateDrawable;
 	private final Drawable albumDrawable;
-	private final Invalidater invalidater;
 	private final Context context;
 	private final PlaybackState playbackState;
 
 	private Configuration(Builder builder) {
 		this.context = builder.context;
-		this.handler = builder.handler;
 		this.random = builder.random;
 		this.width = builder.width;
 		this.height = builder.radius;
@@ -51,20 +47,11 @@ public class Configuration {
 		this.prevDrawable = builder.prevDrawable;
 		this.nextDrawable = builder.nextDrawable;
 		this.albumDrawable = builder.albumDrawable;
-		this.invalidater = builder.invalidater;
 		this.playbackState = builder.playbackState;
 	}
 
 	public Context context() {
 		return context;
-	}
-
-	public Handler handler() {
-		return handler;
-	}
-
-	public Invalidater invalidater() {
-		return invalidater;
 	}
 
 	public Random random() {
@@ -136,7 +123,6 @@ public class Configuration {
 		private float width;
 		private float radius;
 		private Context context;
-		private Handler handler;
 		private Random random;
 		private Drawable playDrawable;
 		private Drawable pauseDrawable;
@@ -144,16 +130,10 @@ public class Configuration {
 		private Drawable nextDrawable;
 		private Drawable plateDrawable;
 		private Drawable albumDrawable;
-		private Invalidater invalidater;
 		private PlaybackState playbackState;
 
 		public Builder context(Context context) {
 			this.context = context;
-			return this;
-		}
-
-		public Builder handler(Handler handler) {
-			this.handler = handler;
 			return this;
 		}
 
@@ -219,11 +199,6 @@ public class Configuration {
 
 		public Builder albumDrawable(@Nullable Drawable albumDrawable) {
 			this.albumDrawable = albumDrawable;
-			return this;
-		}
-
-		public Builder invalidater(Invalidater invalidater) {
-			this.invalidater = invalidater;
 			return this;
 		}
 
