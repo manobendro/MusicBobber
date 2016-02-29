@@ -2,7 +2,9 @@ package com.cleveroad.audiowidget;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
@@ -21,15 +23,15 @@ public class AudioWidget {
 	private ExpandCollapseWidget expandCollapseWidget;
 	private final WindowManager windowManager;
 	private final PlaybackState playbackState;
-	private final ExpandCollapseWidget.OnCollapseListener collapseListener;
+	private float width, height;
 
 	public AudioWidget(@NonNull Context context) {
 		context = context.getApplicationContext();
 		this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 		this.playbackState = new PlaybackState();
-		int height = context.getResources().getDimensionPixelSize(R.dimen.player_height);
-		int width = context.getResources().getDimensionPixelSize(R.dimen.player_width);
-		float radius = height >> 1;
+		height = context.getResources().getDimensionPixelSize(R.dimen.player_height);
+		width = context.getResources().getDimensionPixelSize(R.dimen.player_width);
+		float radius = height / 2f;
 		int playColor = VersionUtil.color(context, R.color.bg_dark);
 		int pauseColor = VersionUtil.color(context, R.color.bg_lite);
 		int progressColor = VersionUtil.color(context, R.color.bg_progress);
@@ -74,7 +76,6 @@ public class AudioWidget {
 			@Override
 			public void onLongClick(float x, float y) {
 				checkSpaceAndShowExpanded();
-				windowManager.removeView(playPauseButton);
 			}
 
 			@Override
@@ -98,37 +99,34 @@ public class AudioWidget {
 				return !expandCollapseWidget.isAnimationInProgress();
 			}
 		});
-		this.collapseListener = () -> {
-			WindowManager.LayoutParams params = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
-			show(playPauseButton, params.x, params.y);
-			windowManager.removeView(expandCollapseWidget);
-		};
-		expandCollapseWidget.onCollapseListener(collapseListener);
+		expandCollapseWidget.onCollapseListener(() -> windowManager.removeView(expandCollapseWidget));
 	}
 
+	@SuppressWarnings("deprecation")
 	private void checkSpaceAndShowExpanded() {
-		byte expandDirection = ExpandCollapseWidget.DIRECTION_LEFT;
-		//				if (playPauseButton.bounds().right - widgetWidth >= 0) {
-//					expandDirection = DIRECTION_LEFT;
-//					startExpandAnimation();
-//				} else if (playPauseButton.bounds().left + widgetWidth <= rootWidth()) {
-//					expandDirection = DIRECTION_RIGHT;
-//					startExpandAnimation();
-//				} else {
-//					float moveFrom, moveTo;
-//					if (playPauseButton.bounds().centerX() < rootWidth() >> 1) {
-//						expandDirection = DIRECTION_RIGHT;
-//						moveFrom = playPauseButton.bounds().left;
-//						moveTo = playPauseButton.bounds().left - (widgetWidth - (rootWidth() - playPauseButton.bounds().left)) - 3 * Configuration.BUTTON_PADDING;
-//					} else {
-//						expandDirection = DIRECTION_LEFT;
-//						moveFrom = playPauseButton.bounds().left;
-//						moveTo = playPauseButton.bounds().left + widgetWidth - playPauseButton.bounds().right + 3 * Configuration.BUTTON_PADDING;
-//					}
-//					playPauseButton.startMoveAnimation(moveFrom, moveTo, expandDirection, this::startExpandAnimation);
-//				}
+		Point size = new Point();
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+			windowManager.getDefaultDisplay().getSize(size);
+		} else {
+			size.x = windowManager.getDefaultDisplay().getWidth();
+			size.y = windowManager.getDefaultDisplay().getHeight();
+		}
 		WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
-		show(expandCollapseWidget, params.x, params.y);
+		int x = params.x;
+		int y = params.y;
+		byte expandDirection;
+		if (x + params.width / 2f > size.x / 2) {
+			expandDirection = ExpandCollapseWidget.DIRECTION_LEFT;
+		} else {
+			expandDirection = ExpandCollapseWidget.DIRECTION_RIGHT;
+		}
+		if (expandDirection == ExpandCollapseWidget.DIRECTION_LEFT) {
+			x -= width - height * 1.5f;
+		} else {
+			x += height / 2f;
+		}
+		show(expandCollapseWidget, x, y);
 		expandCollapseWidget.expand(expandDirection);
 	}
 
@@ -143,13 +141,12 @@ public class AudioWidget {
 				WindowManager.LayoutParams.TYPE_PHONE,
 				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
 						| WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-						| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+						| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+						| WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
 				PixelFormat.TRANSLUCENT);
 		params.gravity = GravityCompat.START | Gravity.TOP;
 		params.x = left;
 		params.y = top;
 		windowManager.addView(view, params);
 	}
-
-
 }

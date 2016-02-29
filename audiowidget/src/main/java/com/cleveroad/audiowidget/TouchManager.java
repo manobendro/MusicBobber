@@ -78,20 +78,20 @@ public class TouchManager implements View.OnTouchListener {
 				float diffY = event.getRawY() - prevY;
 				float l = prevLeft + diffX;
 				float t = prevTop + diffY;
-				if (l < 0) {
-					l = 0;
-				}
-				if (t < 0) {
-					t = 0;
-				}
+//				if (l < 0) {
+//					l = 0;
+//				}
+//				if (t < 0) {
+//					t = 0;
+//				}
 				float r = l + layoutParams.width;
 				float b = t + layoutParams.height;
-				if (rootWidth > 0 && r > rootWidth) {
-					l = rootWidth - layoutParams.width;
-				}
-				if (rootHeight > 0 && b > rootHeight) {
-					t = rootHeight - layoutParams.height;
-				}
+//				if (rootWidth > 0 && r > rootWidth) {
+//					l = rootWidth - layoutParams.width;
+//				}
+//				if (rootHeight > 0 && b > rootHeight) {
+//					t = rootHeight - layoutParams.height;
+//				}
 				if (l < 0 || t < 0) {
 					Log.w("SHAPE", "Can't place shape in correct position. Root view is too small.");
 				}

@@ -53,7 +53,6 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 	private static final int TOTAL_BUBBLES_COUNT = 30;
 	private static final float BUBBLE_MIN_SIZE = 10;
 	private static final float BUBBLE_MAX_SIZE = 25;
-	private static final float BUBBLES_DISTANCE_MULTIPLIER = 2f;
 
 
 	private final Paint paint;
@@ -138,11 +137,6 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 		super.onMeasure(w, h);
 	}
 
-	public boolean isExpanded() {
-		return expanded;
-	}
-
-
 	@Override
 	protected void onDraw(@NonNull Canvas canvas) {
 		if (isAnimationInProgress()) {
@@ -154,10 +148,6 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 			updateCollapseAnimation();
 		}
 		drawInt(canvas);
-//		Paint paint = new Paint(this.paint);
-//		paint.setStrokeWidth(5);
-//		paint.setStyle(Paint.Style.STROKE);
-//		canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), paint);
 	}
 
 	private void drawInt(@NonNull Canvas canvas) {
@@ -179,6 +169,10 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 			}
 		}
 		canvas.drawRoundRect(bounds, radius, radius, paint);
+		drawMediaButtons(canvas);
+	}
+
+	private void drawMediaButtons(@NonNull Canvas canvas) {
 		boolean setDefault;
 		for (int i = 0; i < buttonBounds.length; i++) {
 			setDefault = false;
@@ -197,7 +191,7 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 				} else if (DrawableUtils.isBetween(timeInterval.duration(), COLLAPSE_POSITION_START_F, COLLAPSE_POSITION_END_F) && i == INDEX_PLAY) {
 					drawables[INDEX_PLAY].setBounds(animationBounds[INDEX_PLAY]);
 					drawables[INDEX_PAUSE].setBounds(animationBounds[INDEX_PLAY]);
-				} else if (DrawableUtils.isBetween(timeInterval.duration(), COLLAPSE_ELEMENTS_END_F, COLLAPSE_DURATION_F)) {
+				} else if (DrawableUtils.isBetween(timeInterval.duration(), COLLAPSE_ELEMENTS_END_F, COLLAPSE_DURATION_F) || timeInterval.duration() >= COLLAPSE_DURATION_F) {
 					if (expandDirection == DIRECTION_LEFT) {
 						drawables[INDEX_PLAY].setBounds(buttonBounds[INDEX_ALBUM]);
 						drawables[INDEX_PAUSE].setBounds(buttonBounds[INDEX_ALBUM]);
@@ -206,6 +200,7 @@ public class ExpandCollapseWidget extends View implements PlaybackState.Playback
 						drawables[INDEX_PAUSE].setBounds(buttonBounds[INDEX_PLATE]);
 					}
 				} else {
+					animationBounds[INDEX_PLAY].setEmpty();
 					setDefault = true;
 				}
 			} else {

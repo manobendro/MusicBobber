@@ -27,9 +27,6 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 	private static final float COLOR_ANIMATION_TIME_END_F = COLOR_ANIMATION_TIME_START_F + COLOR_ANIMATION_TIME_F;
 	private static final int TOTAL_BUBBLES_COUNT = (int) (360 / BUBBLES_ANGLE_STEP);
 
-	private static final float MOVE_DURATION_F = 3 * Configuration.FRAME_SPEED;
-	private static final long MOVE_DURATION_L = (long) MOVE_DURATION_F;
-
 	private final TimeInterval timeInterval;
 	private final Paint buttonPaint;
 	private final Paint bubblesPaint;
@@ -46,10 +43,6 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 
 	private boolean animatingBubbles;
 	private Timer timer;
-
-	private byte expandDirection;
-	private float moveFrom, moveTo;
-	private boolean animatingMove;
 	private float startAngle;
 
 
@@ -101,7 +94,7 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 	}
 
 	public boolean isAnimationInProgress() {
-		return animatingBubbles || animatingMove;
+		return animatingBubbles;
 	}
 
 	private void startBubblesAnimation() {
@@ -118,7 +111,6 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 	}
 
 	private void stopAnyAnimation() {
-		animatingMove = false;
 		animatingBubbles = false;
 		timer.cancel();
 		timer.purge();
@@ -131,10 +123,7 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 	public void onDraw(@NonNull Canvas canvas) {
 		float cx = getWidth() >> 1;
 		float cy = getHeight() >> 1;
-		if (animatingMove) {
-			timeInterval.step();
-			updateMoveAnimation();
-		} else if (animatingBubbles) {
+		if (animatingBubbles) {
 			timeInterval.step();
 			float dur = timeInterval.duration();
 			if (dur > ANIMATION_TIME_F) {
@@ -143,7 +132,7 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 			float dt = DrawableUtils.normalize(dur, 0, ANIMATION_TIME_F);
 			int alpha = (int) DrawableUtils.customFunction(dt, 0, 0, 0, 0.3f, 255, 0.5f, 225, 0.7f, 0, 1f);
 			bubblesPaint.setAlpha(alpha);
-			if (dur >= COLOR_ANIMATION_TIME_START_F && dur <= COLOR_ANIMATION_TIME_END_F) {
+			if (DrawableUtils.isBetween(dur, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F)) {
 				float colorDt = DrawableUtils.normalize(dur, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F);
 				buttonPaint.setColor(colorChanger.nextColor(colorDt));
 				if (playbackState.state() == PlaybackState.STATE_PLAYING) {
@@ -160,7 +149,7 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 				float speed = dt * bubbleSpeeds[i];
 				float x = DrawableUtils.rotateX(cx, cy * (1 - speed), cx, cy, angle);
 				float y = DrawableUtils.rotateY(cx, cy * (1 - speed), cx, cy, angle);
-				canvas.drawCircle(x, y, bubbleSizes[i], buttonPaint);
+				canvas.drawCircle(x, y, bubbleSizes[i], bubblesPaint);
 			}
 		}
 
@@ -173,31 +162,6 @@ public class PlayPauseButton extends View implements PlaybackState.PlaybackState
 		pauseDrawable.setBounds(l, t, r, b);
 		playDrawable.draw(canvas);
 		pauseDrawable.draw(canvas);
-	}
-
-	private void updateMoveAnimation() {
-		if (DrawableUtils.isBetween(timeInterval.duration(), 0, MOVE_DURATION_F)) {
-			float time = DrawableUtils.normalize(timeInterval.duration(), 0, MOVE_DURATION_F);
-			float l;
-			if (expandDirection == ExpandCollapseWidget.DIRECTION_LEFT) {
-				l = DrawableUtils.enlarge(moveFrom, moveTo, time);
-			} else {
-				l = DrawableUtils.reduce(moveFrom, moveTo, time);
-			}
-			// TODO: 26.02.2016 use touchmanager
-//			float t = bounds().top;
-//			float b = bounds().bottom;
-//			float r = l + bounds().width();
-//			bounds().set(l, t, r, b);
-		}
-	}
-
-	public void startMoveAnimation(float moveFrom, float moveTo, byte expandDirection, Runnable runnable) {
-		animatingMove = true;
-		this.moveFrom = moveFrom;
-		this.moveTo = moveTo;
-		this.expandDirection = expandDirection;
-		setupTimer(MOVE_DURATION_L, runnable);
 	}
 
 	private void setupTimer(long duration, Runnable runnable) {
