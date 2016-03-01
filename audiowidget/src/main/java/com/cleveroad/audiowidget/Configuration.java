@@ -12,16 +12,15 @@ import java.util.Random;
  */
 class Configuration {
 
-	public static final long UPDATE_INTERVAL = 16;
 	public static final float FRAME_SPEED = 70.0f;
-	public static final int BUTTON_PADDING = 8;
+	public static final int BUTTON_PADDING = 24;
 
 	public static final long CLICK_THRESHOLD = 200;
 	public static final long LONG_CLICK_THRESHOLD = 400;
 	public static final float MOVEMENT_THRESHOLD = 10.0f;
 
-	private final int pauseColor;
-	private final int playColor;
+	private final int lightColor;
+	private final int darkColor;
 	private final int progressColor;
 	private final int expandedColor;
 	private final Random random;
@@ -31,7 +30,7 @@ class Configuration {
 	private final Drawable pauseDrawable;
 	private final Drawable prevDrawable;
 	private final Drawable nextDrawable;
-	private final Drawable plateDrawable;
+	private final Drawable playlistDrawable;
 	private final Drawable albumDrawable;
 	private final Context context;
 	private final PlaybackState playbackState;
@@ -41,11 +40,11 @@ class Configuration {
 		this.random = builder.random;
 		this.width = builder.width;
 		this.height = builder.radius;
-		this.pauseColor = builder.pauseColor;
-		this.playColor = builder.playColor;
+		this.lightColor = builder.lightColor;
+		this.darkColor = builder.darkColor;
 		this.progressColor = builder.progressColor;
 		this.expandedColor = builder.expandedColor;
-		this.plateDrawable = builder.plateDrawable;
+		this.playlistDrawable = builder.playlistDrawable;
 		this.playDrawable = builder.playDrawable;
 		this.pauseDrawable = builder.pauseDrawable;
 		this.prevDrawable = builder.prevDrawable;
@@ -63,13 +62,13 @@ class Configuration {
 	}
 
 	@ColorInt
-	public int pauseColor() {
-		return pauseColor;
+	public int lightColor() {
+		return lightColor;
 	}
 
 	@ColorInt
-	public int playColor() {
-		return playColor;
+	public int darkColor() {
+		return darkColor;
 	}
 
 	@ColorInt
@@ -106,8 +105,8 @@ class Configuration {
 		return nextDrawable;
 	}
 
-	public Drawable plateDrawable() {
-		return plateDrawable;
+	public Drawable playlistDrawable() {
+		return playlistDrawable;
 	}
 
 	public Drawable albumDrawable() {
@@ -120,8 +119,8 @@ class Configuration {
 
 	public static final class Builder {
 
-		private int pauseColor;
-		private int playColor;
+		private int lightColor;
+		private int darkColor;
 		private int progressColor;
 		private int expandedColor;
 		private float width;
@@ -132,7 +131,7 @@ class Configuration {
 		private Drawable pauseDrawable;
 		private Drawable prevDrawable;
 		private Drawable nextDrawable;
-		private Drawable plateDrawable;
+		private Drawable playlistDrawable;
 		private Drawable albumDrawable;
 		private PlaybackState playbackState;
 
@@ -141,13 +140,13 @@ class Configuration {
 			return this;
 		}
 
-		public Builder pauseColor(@ColorInt int pauseColor) {
-			this.pauseColor = pauseColor;
+		public Builder playColor(@ColorInt int pauseColor) {
+			this.lightColor = pauseColor;
 			return this;
 		}
 
-		public Builder playColor(@ColorInt int playColor) {
-			this.playColor = playColor;
+		public Builder darkColor(@ColorInt int playColor) {
+			this.darkColor = playColor;
 			return this;
 		}
 
@@ -196,8 +195,8 @@ class Configuration {
 			return this;
 		}
 
-		public Builder plateDrawable(@Nullable Drawable plateDrawable) {
-			this.plateDrawable = plateDrawable;
+		public Builder playlistDrawable(@Nullable Drawable plateDrawable) {
+			this.playlistDrawable = plateDrawable;
 			return this;
 		}
 

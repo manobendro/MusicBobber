@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="player_height">60dp</dimen>
-    <dimen name="player_width">300dp</dimen>
-    <dimen name="button_size">48dp</dimen>
+    <dimen name="aw_player_height">60dp</dimen>
+    <dimen name="aw_player_width">300dp</dimen>
+    <dimen name="aw_button_size">48dp</dimen>
 </resources>

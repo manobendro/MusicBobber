@@ -19,12 +19,19 @@ class TouchManager implements View.OnTouchListener {
 
 	private long onDownTimestamp;
 	private boolean longClickCanceled;
-	private float prevX;
-	private float prevY;
+	private float prevRawX;
+	private float prevRawY;
+    private float prevX;
+    private float prevY;
 	private float prevLeft;
 	private float prevTop;
 	private boolean movedFarEnough;
 	private boolean longClickPerformed;
+	/**
+	 * This flag indicates {@link MotionEvent#ACTION_DOWN} was called and handled by touch manager.
+	 * Without it manager will receive other actions even if {@link MotionEvent#ACTION_DOWN} not handled.
+	 */
+	private boolean downCalled;
 	private Callback callback;
 
 	private TouchManager(@NonNull View view) {
@@ -50,14 +57,17 @@ class TouchManager implements View.OnTouchListener {
 		WindowManager.LayoutParams layoutParams = (WindowManager.LayoutParams) view.getLayoutParams();
 		switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN: {
-				prevX = event.getRawX();
-				prevY = event.getRawY();
+				prevRawX = event.getRawX();
+				prevRawY = event.getRawY();
+                prevX = event.getX();
+                prevY = event.getY();
 				prevLeft = layoutParams.x;
 				prevTop = layoutParams.y;
 				onDownTimestamp = System.currentTimeMillis();
 				longClickCanceled = false;
 				movedFarEnough = false;
 				longClickPerformed = false;
+				downCalled = true;
 				postDelayed(() -> {
 					if (!longClickCanceled && !movedFarEnough) {
 						longClickPerformed = true;
@@ -72,11 +82,11 @@ class TouchManager implements View.OnTouchListener {
 				return true;
 			}
 			case MotionEvent.ACTION_MOVE: {
-				if (longClickPerformed) {
-					return false;
+				if (!downCalled || longClickPerformed) {
+					break;
 				}
-				float diffX = event.getRawX() - prevX;
-				float diffY = event.getRawY() - prevY;
+				float diffX = event.getRawX() - prevRawX;
+				float diffY = event.getRawY() - prevRawY;
 				float l = prevLeft + diffX;
 				float t = prevTop + diffY;
 				float r = l + layoutParams.width;
@@ -115,7 +125,7 @@ class TouchManager implements View.OnTouchListener {
 				if (callback != null) {
 					callback.onTouchOutside();
 				}
-				break;
+				return true;
 			}
 		}
 		return false;

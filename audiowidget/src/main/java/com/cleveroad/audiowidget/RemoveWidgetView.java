@@ -22,9 +22,10 @@ class RemoveWidgetView extends View {
 		this.radius = configuration.radius();
 		this.size = configuration.radius() * 2;
 		this.paint = new Paint();
+		paint.setAntiAlias(true);
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setStrokeWidth(DrawableUtils.dpToPx(configuration.context(), 4));
-		paint.setColor(configuration.pauseColor());
+		paint.setColor(configuration.lightColor());
 		paint.setStrokeCap(Paint.Cap.ROUND);
 	}
 

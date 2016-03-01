@@ -63,7 +63,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.playbackState = configuration.playbackState();
 		this.random = configuration.random();
 		this.buttonPaint = new Paint();
-		this.buttonPaint.setColor(configuration.pauseColor());
+		this.buttonPaint.setColor(configuration.lightColor());
 		this.buttonPaint.setStyle(Paint.Style.FILL);
 		this.buttonPaint.setAntiAlias(true);
 		this.buttonPaint.setShadowLayer(10, 2, 2, Color.argb(80, 0, 0, 0));
@@ -74,8 +74,8 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.progressPaint.setStyle(Paint.Style.STROKE);
 		this.progressPaint.setStrokeWidth(DrawableUtils.dpToPx(configuration.context(), 4));
 		this.progressPaint.setColor(configuration.progressColor());
-		this.pausedColor = configuration.pauseColor();
-		this.playingColor = configuration.playColor();
+		this.pausedColor = configuration.lightColor();
+		this.playingColor = configuration.darkColor();
 		this.radius = configuration.radius();
 		this.bounds = new RectF();
 		this.bubbleSizes = new float[TOTAL_BUBBLES_COUNT];
@@ -140,7 +140,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		if (DrawableUtils.isBetween(position, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F)) {
 			float colorDt = DrawableUtils.normalize(position, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F);
 			buttonPaint.setColor(colorChanger.nextColor(colorDt));
-			if (playbackState.state() == PlaybackState.STATE_PLAYING) {
+			if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
 				pauseDrawable.setAlpha((int) DrawableUtils.between(255 * colorDt, 0, 255));
 				playDrawable.setAlpha((int) DrawableUtils.between(255 * (1 - colorDt), 0, 255));
 			} else {
@@ -157,18 +157,16 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		if (isAnimationInProgress()) {
 			return;
 		}
-		if (playbackState.state() == PlaybackState.STATE_PLAYING) {
+		if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
 			colorChanger
 					.fromColor(playingColor)
 					.toColor(pausedColor);
 			bubblesPaint.setColor(pausedColor);
-			playbackState.pause(this);
 		} else {
 			colorChanger
 					.fromColor(pausedColor)
 					.toColor(playingColor);
 			bubblesPaint.setColor(playingColor);
-			playbackState.start(this);
 		}
 		startBubblesAnimation();
 	}
@@ -210,7 +208,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 				float y = DrawableUtils.rotateY(cx, cy * (1 - speed), cx, cy, angle);
 				canvas.drawCircle(x, y, bubbleSizes[i], bubblesPaint);
 			}
-		} else if (playbackState.state() != PlaybackState.STATE_PLAYING) {
+		} else if (playbackState.state() != AudioWidget.Controller.STATE_PLAYING) {
 			playDrawable.setAlpha(255);
 			pauseDrawable.setAlpha(0);
 		} else {
@@ -227,11 +225,11 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		int t = (int) (cy - radius + Configuration.BUTTON_PADDING);
 		int r = (int) (cx + radius - Configuration.BUTTON_PADDING);
 		int b = (int) (cy + radius - Configuration.BUTTON_PADDING);
-		if (animatingBubbles || playbackState.state() != PlaybackState.STATE_PLAYING) {
+		if (animatingBubbles || playbackState.state() != AudioWidget.Controller.STATE_PLAYING) {
 			playDrawable.setBounds(l, t, r, b);
 			playDrawable.draw(canvas);
 		}
-		if (animatingBubbles || playbackState.state() == PlaybackState.STATE_PLAYING) {
+		if (animatingBubbles || playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
 			pauseDrawable.setBounds(l, t, r, b);
 			pauseDrawable.draw(canvas);
 		}
@@ -239,9 +237,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 
 	@Override
 	public void onStateChanged(int oldState, int newState, Object initiator) {
-		if (initiator == this)
+		if (initiator instanceof AudioWidget)
 			return;
-		if (newState == PlaybackState.STATE_PLAYING) {
+		if (newState == AudioWidget.Controller.STATE_PLAYING) {
 			buttonPaint.setColor(playingColor);
 			pauseDrawable.setAlpha(255);
 			playDrawable.setAlpha(0);

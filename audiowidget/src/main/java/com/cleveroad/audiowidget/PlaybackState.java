@@ -8,11 +8,7 @@ import java.util.Set;
 /**
  * Created by Александр on 26.02.2016.
  */
-public class PlaybackState {
-
-	public static final int STATE_STOPPED = 0;
-	public static final int STATE_PLAYING = 1;
-	public static final int STATE_PAUSED = 2;
+class PlaybackState {
 
 	private int state;
 
@@ -57,15 +53,15 @@ public class PlaybackState {
 	}
 
 	public void start(Object initiator) {
-		state(STATE_PLAYING, initiator);
+		state(AudioWidget.Controller.STATE_PLAYING, initiator);
 	}
 
 	public void pause(Object initiator) {
-		state(STATE_PAUSED, initiator);
+		state(AudioWidget.Controller.STATE_PAUSED, initiator);
 	}
 
 	public void stop(Object initiator) {
-		state(STATE_STOPPED, initiator);
+		state(AudioWidget.Controller.STATE_STOPPED, initiator);
 		position(0);
 	}
 

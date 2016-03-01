@@ -9,7 +9,9 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 
@@ -44,7 +46,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private static final float COLLAPSE_POSITION_END_F = 12 * Configuration.FRAME_SPEED;
 
 
-	private static final int INDEX_PLATE = 0;
+	private static final int INDEX_PLAYLIST = 0;
 	private static final int INDEX_PREV = 1;
 	private static final int INDEX_PLAY = 2;
 	private static final int INDEX_NEXT = 3;
@@ -77,14 +79,16 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private final PlaybackState playbackState;
 	private final ValueAnimator expandAnimator;
 	private final ValueAnimator collapseAnimator;
+	private final Drawable defaultAlbumCover;
 
 	private float bubblesTime;
 	private boolean expanded;
 	private boolean animatingExpand, animatingCollapse;
 	private boolean updatedBubbles;
 	private byte expandDirection;
-	private OnCollapseListener collapseListener;
+	private AudioWidget.OnWidgetStateChangedListener onWidgetStateChangedListener;
 	private int padding;
+	private AudioWidget.OnControlsClickListener onControlsClickListener;
 
 	public ExpandCollapseWidget(@NonNull Configuration configuration) {
 		super(configuration.context());
@@ -102,19 +106,19 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.radius = configuration.radius();
 		this.widgetWidth = configuration.widgetWidth();
 		this.colorChanger = new ColorChanger();
-		this.playColor = configuration.playColor();
-		this.pauseColor = configuration.pauseColor();
+		this.playColor = configuration.darkColor();
+		this.pauseColor = configuration.lightColor();
 		this.widgetColor = configuration.expandedColor();
 		this.tmpRect = new Rect();
 		this.buttonBounds = new Rect[5];
 		this.drawables = new Drawable[6];
 		this.bounds = new RectF();
-		this.drawables[INDEX_PLATE] = configuration.plateDrawable().getConstantState().newDrawable();
+		this.drawables[INDEX_PLAYLIST] = configuration.playlistDrawable().getConstantState().newDrawable();
 		this.drawables[INDEX_PREV] = configuration.prevDrawable().getConstantState().newDrawable();
 		this.drawables[INDEX_PLAY] = configuration.playDrawable().getConstantState().newDrawable();
 		this.drawables[INDEX_PAUSE] = configuration.pauseDrawable().getConstantState().newDrawable();
 		this.drawables[INDEX_NEXT] = configuration.nextDrawable().getConstantState().newDrawable();
-		this.drawables[INDEX_ALBUM] = configuration.albumDrawable().getConstantState().newDrawable();
+		this.drawables[INDEX_ALBUM] = defaultAlbumCover = configuration.albumDrawable().getConstantState().newDrawable();
 		this.sizeStep = widgetWidth / 5f;
 		this.widgetHeight = radius * 2;
 		for (int i = 0; i < buttonBounds.length; i++) {
@@ -124,7 +128,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.bubbleSpeeds = new float[TOTAL_BUBBLES_COUNT];
 		this.bubblePositions = new float[TOTAL_BUBBLES_COUNT * 2];
 		this.playbackState.addPlaybackStateListener(this);
-		this.expandAnimator = ValueAnimator.ofInt(0, (int)EXPAND_DURATION_L).setDuration(EXPAND_DURATION_L);
+		this.expandAnimator = ValueAnimator.ofInt(0, (int) EXPAND_DURATION_L).setDuration(EXPAND_DURATION_L);
 		this.expandAnimator.addUpdateListener(animation -> {
 			int position = (int) animation.getAnimatedValue();
 			updateExpandAnimation(position);
@@ -142,6 +146,9 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				super.onAnimationEnd(animation);
 				animatingExpand = false;
 				expanded = true;
+				if (onWidgetStateChangedListener != null) {
+					onWidgetStateChangedListener.onStateChanged(AudioWidget.State.EXPANDED);
+				}
 			}
 
 			@Override
@@ -150,7 +157,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				animatingExpand = false;
 			}
 		});
-		this.collapseAnimator = ValueAnimator.ofInt(0, (int)COLLAPSE_DURATION_L).setDuration(COLLAPSE_DURATION_L);
+		this.collapseAnimator = ValueAnimator.ofInt(0, (int) COLLAPSE_DURATION_L).setDuration(COLLAPSE_DURATION_L);
 		this.collapseAnimator.addUpdateListener(animation -> {
 			int position = (int) animation.getAnimatedValue();
 			updateCollapseAnimation(position);
@@ -168,8 +175,8 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				super.onAnimationEnd(animation);
 				animatingCollapse = false;
 				expanded = false;
-				if (collapseListener != null) {
-					collapseListener.onCollapsed();
+				if (onWidgetStateChangedListener != null) {
+					onWidgetStateChangedListener.onStateChanged(AudioWidget.State.COLLAPSED);
 				}
 			}
 
@@ -193,7 +200,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	protected void onDraw(@NonNull Canvas canvas) {
 		if (animatingExpand && bubblesTime >= 0) {
 			int half = TOTAL_BUBBLES_COUNT / 2;
-			for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
+			for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
 				float radius = bubbleSizes[i];
 				float speed = bubbleSpeeds[i] * bubblesTime;
 				float cx = bubblePositions[2 * i];
@@ -213,10 +220,14 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		for (int i = 0; i < buttonBounds.length; i++) {
 			Drawable drawable;
 			if (i == INDEX_PLAY) {
-				if (playbackState.state() == PlaybackState.STATE_PLAYING) {
+				if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
 					drawable = drawables[INDEX_PAUSE];
 				} else {
 					drawable = drawables[INDEX_PLAY];
+				}
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && drawable.getAlpha() == 0) {
+					Log.w("TEST", "wrong alpha value");
+					drawable.setAlpha(255);
 				}
 			} else {
 				drawable = drawables[i];
@@ -257,7 +268,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			if (expandDirection == DIRECTION_LEFT) {
 				calculateBounds(INDEX_ALBUM, buttonBounds[INDEX_PLAY]);
 			} else {
-				calculateBounds(INDEX_PLATE, buttonBounds[INDEX_PLAY]);
+				calculateBounds(INDEX_PLAYLIST, buttonBounds[INDEX_PLAY]);
 			}
 		}
 		if (DrawableUtils.isBetween(position, 0, EXPAND_ELEMENTS_START_F)) {
@@ -283,7 +294,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				l = (int) DrawableUtils.reduce(tmpRect.left, playBounds.left, time);
 				r = l + playBounds.width();
 			} else {
-				calculateBounds(INDEX_PLATE, tmpRect);
+				calculateBounds(INDEX_PLAYLIST, tmpRect);
 				l = (int) DrawableUtils.enlarge(tmpRect.left, playBounds.left, time);
 				r = l + playBounds.width();
 			}
@@ -296,7 +307,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				updatedBubbles = true;
 				int half = TOTAL_BUBBLES_COUNT / 2;
 				float step = widgetWidth / half;
-				for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
+				for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
 					int index = i % half;
 					float speed = 0.3f + 0.7f * random.nextFloat();
 					float size = BUBBLE_MIN_SIZE + (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE) * random.nextFloat();
@@ -320,10 +331,14 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	}
 
 	private void calculateBounds(int index, Rect bounds) {
-		int l = (int) (index * sizeStep + Configuration.BUTTON_PADDING);
-		int t = (int) (radius + Configuration.BUTTON_PADDING);
-		int r = (int) ((index + 1) * sizeStep - Configuration.BUTTON_PADDING);
-		int b = (int) (radius * 3 - Configuration.BUTTON_PADDING);
+		calculateBounds(index, bounds, Configuration.BUTTON_PADDING);
+	}
+
+	private void calculateBounds(int index, Rect bounds, int padding) {
+		int l = (int) (index * sizeStep + padding);
+		int t = (int) (radius + padding);
+		int r = (int) ((index + 1) * sizeStep - padding);
+		int b = (int) (radius * 3 - padding);
 		bounds.set(l, t, r, b);
 	}
 
@@ -351,7 +366,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				l = (int) DrawableUtils.enlarge(playBounds.left, tmpRect.left, time);
 				r = l + playBounds.width();
 			} else {
-				calculateBounds(INDEX_PLATE, tmpRect);
+				calculateBounds(INDEX_PLAYLIST, tmpRect);
 				l = (int) DrawableUtils.reduce(playBounds.left, tmpRect.left, time);
 				r = l + playBounds.width();
 			}
@@ -379,15 +394,12 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		int alpha = (int) DrawableUtils.between(time * 255, 0, 255);
 		for (int i = 0; i < buttonBounds.length; i++) {
 			if (i != INDEX_PLAY) {
-				float w = time * sizeStep / 2f;
-				float h = time * sizeStep / 2f;
-				int l = (int) (i * sizeStep + Configuration.BUTTON_PADDING);
-				int t = (int) (radius + Configuration.BUTTON_PADDING);
-				int r = (int) ((i + 1) * sizeStep - Configuration.BUTTON_PADDING);
-				int b = (int) (radius * 3 - Configuration.BUTTON_PADDING);
-				int cx = (l + r) >> 1;
-				int cy = (t + b) >> 1;
-				buttonBounds[i].set((int) (cx - w), (int) (cy - h), (int) (cx + w), (int) (cy + h));
+				int padding = 16;
+				calculateBounds(i, buttonBounds[i]);
+				float size = time * (sizeStep / 2f - padding);
+				int cx = buttonBounds[i].centerX();
+				int cy = buttonBounds[i].centerY();
+				buttonBounds[i].set((int) (cx - size), (int) (cy - size), (int) (cx + size), (int) (cy + size));
 				drawables[i].setAlpha(alpha);
 			}
 		}
@@ -398,30 +410,41 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			return;
 		int index = -1;
 		for (int i = 0; i < buttonBounds.length; i++) {
-			if (buttonBounds[i].contains((int) x, (int) y)) {
+			calculateBounds(i, tmpRect, 0);
+			if (tmpRect.contains((int) x, (int) y)) {
 				index = i;
 				break;
 			}
 		}
 		switch (index) {
-			case INDEX_PLATE: {
-				onPlateClicked();
+			case INDEX_PLAYLIST: {
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onPlaylistClicked();
+				}
 				break;
 			}
 			case INDEX_PREV: {
-				onPrevClicked();
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onPreviousClicked();
+				}
 				break;
 			}
 			case INDEX_PLAY: {
-				onPlayPauseClicked();
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onPlayPauseClicked();
+				}
 				break;
 			}
 			case INDEX_NEXT: {
-				onNextClicked();
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onNextClicked();
+				}
 				break;
 			}
 			case INDEX_ALBUM: {
-				onAlbumClicked();
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onAlbumClicked();
+				}
 				break;
 			}
 			default: {
@@ -429,30 +452,6 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				break;
 			}
 		}
-	}
-
-	private void onPlateClicked() {
-
-	}
-
-	private void onPlayPauseClicked() {
-		if (playbackState.state() != PlaybackState.STATE_PLAYING) {
-			playbackState.start(this);
-		} else {
-			playbackState.pause(this);
-		}
-	}
-
-	private void onNextClicked() {
-
-	}
-
-	private void onPrevClicked() {
-
-	}
-
-	private void onAlbumClicked() {
-
 	}
 
 	public void expand(byte expandDirection) {
@@ -466,7 +465,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		if (isAnimationInProgress())
 			return;
 		animatingExpand = true;
-		if (playbackState.state() == PlaybackState.STATE_PLAYING) {
+		if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
 			colorChanger
 					.fromColor(playColor)
 					.toColor(widgetColor);
@@ -493,7 +492,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		if (!expanded) {
 			return;
 		}
-		if (playbackState.state() == PlaybackState.STATE_PLAYING) {
+		if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
 			colorChanger
 					.fromColor(widgetColor)
 					.toColor(playColor);
@@ -515,8 +514,8 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 
 	}
 
-	public ExpandCollapseWidget onCollapseListener(OnCollapseListener collapseListener) {
-		this.collapseListener = collapseListener;
+	public ExpandCollapseWidget onWidgetStateChangedListener(AudioWidget.OnWidgetStateChangedListener onWidgetStateChangedListener) {
+		this.onWidgetStateChangedListener = onWidgetStateChangedListener;
 		return this;
 	}
 
@@ -524,7 +523,22 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		return expandDirection;
 	}
 
-	interface OnCollapseListener {
-		void onCollapsed();
+	public void onControlsClickListener(AudioWidget.OnControlsClickListener onControlsClickListener) {
+		this.onControlsClickListener = onControlsClickListener;
+	}
+
+	public void albumCover(@Nullable Drawable albumCover) {
+		if (drawables[INDEX_ALBUM] == albumCover)
+			return;
+		if (albumCover == null) {
+			drawables[INDEX_ALBUM] = defaultAlbumCover;
+		} else {
+			if (albumCover.getConstantState() != null)
+				drawables[INDEX_ALBUM] = albumCover.getConstantState().newDrawable();
+			else
+				drawables[INDEX_ALBUM] = albumCover;
+		}
+		Rect bounds = buttonBounds[INDEX_ALBUM];
+		invalidate(bounds.left, bounds.top, bounds.right, bounds.bottom);
 	}
 }
