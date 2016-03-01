@@ -95,7 +95,11 @@ public class AudioWidget {
 
 		playPauseButtonManager.callback(new PlayPauseButtonCallback());
 		expandedWidgetManager.callback(new ExpandCollapseWidgetCallback());
-		expandCollapseWidget.onCollapseListener(() -> windowManager.removeView(expandCollapseWidget));
+		expandCollapseWidget.onCollapseListener(() -> {
+			playPauseButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+			windowManager.removeView(expandCollapseWidget);
+			playPauseButton.enableProgressChanges(true);
+		});
 	}
 
 	public void show(int left, int top) {
@@ -140,6 +144,14 @@ public class AudioWidget {
 		windowManager.addView(view, params);
 	}
 
+	public void setDuration(int duration) {
+		playbackState.duration(duration);
+	}
+
+	public void setPosition(int position) {
+		playbackState.position(position);
+	}
+
 	class PlayPauseButtonCallback extends TouchManager.SimpleCallback {
 
 		private final ValueAnimator.AnimatorUpdateListener animatorUpdateListener;
@@ -164,7 +176,8 @@ public class AudioWidget {
 		@Override
 		public void onLongClick(float x, float y) {
 			released = true;
-			checkSpaceAndShowExpanded();
+			playPauseButton.enableProgressChanges(false);
+			playPauseButton.postDelayed(this::checkSpaceAndShowExpanded, PlayPauseButton.PROGRESS_CHANGES_DURATION);
 		}
 
 		@Override
@@ -188,6 +201,7 @@ public class AudioWidget {
 			} else {
 				x += height / 2f;
 			}
+			playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
 			show(expandCollapseWidget, x, y);
 			expandCollapseWidget.expand(expandDirection);
 		}
@@ -227,11 +241,7 @@ public class AudioWidget {
 				ValueAnimator animator = ValueAnimator.ofFloat(visibleRemWidY, hiddenRemWidY);
 				animator.setDuration(200);
 				animator.addUpdateListener(animatorUpdateListener);
-				animator.addListener(new Animator.AnimatorListener() {
-					@Override
-					public void onAnimationStart(Animator animation) {
-
-					}
+				animator.addListener(new SimpleAnimatorListener() {
 
 					@Override
 					public void onAnimationEnd(Animator animation) {
@@ -239,16 +249,6 @@ public class AudioWidget {
 						if (!shown) {
 							windowManager.removeView(removeWidgetView);
 						}
-					}
-
-					@Override
-					public void onAnimationCancel(Animator animation) {
-
-					}
-
-					@Override
-					public void onAnimationRepeat(Animator animation) {
-
 					}
 				});
 				animator.start();

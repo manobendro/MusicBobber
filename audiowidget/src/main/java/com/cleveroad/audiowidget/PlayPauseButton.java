@@ -1,16 +1,17 @@
 package com.cleveroad.audiowidget;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.view.View;
 
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by Александр on 24.02.2016.
@@ -27,44 +28,59 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private static final float COLOR_ANIMATION_TIME_START_F = (ANIMATION_TIME_F - COLOR_ANIMATION_TIME_F) / 2;
 	private static final float COLOR_ANIMATION_TIME_END_F = COLOR_ANIMATION_TIME_START_F + COLOR_ANIMATION_TIME_F;
 	private static final int TOTAL_BUBBLES_COUNT = (int) (360 / BUBBLES_ANGLE_STEP);
+	static final long PROGRESS_CHANGES_DURATION = (long) (8 * Configuration.FRAME_SPEED);
 
-	private final TimeInterval timeInterval;
 	private final Paint buttonPaint;
 	private final Paint bubblesPaint;
+	private final Paint progressPaint;
 	private final int pausedColor;
 	private final int playingColor;
 	private final float[] bubbleSizes;
 	private final float[] bubbleSpeeds;
+	private final float[] bubbleSpeedCoefficients;
 	private final Random random;
 	private final ColorChanger colorChanger;
 	private final Drawable playDrawable;
 	private final Drawable pauseDrawable;
+	private final RectF bounds;
 	private final float radius;
 	private final PlaybackState playbackState;
 	private final ValueAnimator touchDownAnimator;
 	private final ValueAnimator touchUpAnimator;
+	private final ValueAnimator bubblesAnimator;
+	private final ValueAnimator progressAnimator;
 
 	private boolean animatingBubbles;
-	private Timer timer;
-	private float startAngle;
+	private float randomStartAngle;
 	private float buttonSize = 1.0f;
+	private float progress = 0.75f;
+	private float animatedProgress = progress;
+	private boolean progressChangesEnabled;
 
 	public PlayPauseButton(@NonNull Configuration configuration) {
 		super(configuration.context());
+		setLayerType(LAYER_TYPE_SOFTWARE, null);
 		this.playbackState = configuration.playbackState();
 		this.random = configuration.random();
-		this.timeInterval = new TimeInterval();
 		this.buttonPaint = new Paint();
 		this.buttonPaint.setColor(configuration.pauseColor());
 		this.buttonPaint.setStyle(Paint.Style.FILL);
 		this.buttonPaint.setAntiAlias(true);
+		this.buttonPaint.setShadowLayer(10, 2, 2, Color.argb(80, 0, 0, 0));
 		this.bubblesPaint = new Paint();
 		this.bubblesPaint.setStyle(Paint.Style.FILL);
+		this.progressPaint = new Paint();
+		this.progressPaint.setAntiAlias(true);
+		this.progressPaint.setStyle(Paint.Style.STROKE);
+		this.progressPaint.setStrokeWidth(DrawableUtils.dpToPx(configuration.context(), 4));
+		this.progressPaint.setColor(configuration.progressColor());
 		this.pausedColor = configuration.pauseColor();
 		this.playingColor = configuration.playColor();
 		this.radius = configuration.radius();
+		this.bounds = new RectF();
 		this.bubbleSizes = new float[TOTAL_BUBBLES_COUNT];
 		this.bubbleSpeeds = new float[TOTAL_BUBBLES_COUNT];
+		this.bubbleSpeedCoefficients = new float[TOTAL_BUBBLES_COUNT];
 		this.colorChanger = new ColorChanger();
 		this.playDrawable = configuration.playDrawable().getConstantState().newDrawable();
 		this.pauseDrawable = configuration.pauseDrawable().getConstantState().newDrawable();
@@ -78,6 +94,38 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.touchDownAnimator.addUpdateListener(listener);
 		this.touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1).setDuration(100);
 		this.touchUpAnimator.addUpdateListener(listener);
+		this.bubblesAnimator = ValueAnimator.ofInt(0, (int)ANIMATION_TIME_L).setDuration(ANIMATION_TIME_L);
+		this.bubblesAnimator.addUpdateListener(animation -> {
+			long position = animation.getCurrentPlayTime();
+			float fraction = animation.getAnimatedFraction();
+			updateBubblesPosition(position, fraction);
+			invalidate();
+		});
+		this.bubblesAnimator.addListener(new SimpleAnimatorListener() {
+
+			@Override
+			public void onAnimationStart(Animator animation) {
+				super.onAnimationStart(animation);
+				animatingBubbles = true;
+			}
+
+			@Override
+			public void onAnimationEnd(Animator animation) {
+				super.onAnimationEnd(animation);
+				animatingBubbles = false;
+			}
+
+			@Override
+			public void onAnimationCancel(Animator animation) {
+				super.onAnimationCancel(animation);
+				animatingBubbles = false;
+			}
+		});
+		this.progressAnimator = ValueAnimator.ofFloat();
+		this.progressAnimator.addUpdateListener(animation -> {
+			animatedProgress = (float) animation.getAnimatedValue();
+			invalidate();
+		});
 	}
 
 	@Override
@@ -86,49 +134,59 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		super.onMeasure(size , size);
 	}
 
-	public void onClick() {
-		if (!animatingBubbles) {
+	private void updateBubblesPosition(long position, float fraction) {
+		int alpha = (int) DrawableUtils.customFunction(fraction, 0, 0, 0, 0.3f, 255, 0.5f, 225, 0.7f, 0, 1f);
+		bubblesPaint.setAlpha(alpha);
+		if (DrawableUtils.isBetween(position, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F)) {
+			float colorDt = DrawableUtils.normalize(position, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F);
+			buttonPaint.setColor(colorChanger.nextColor(colorDt));
 			if (playbackState.state() == PlaybackState.STATE_PLAYING) {
-				colorChanger
-						.fromColor(playingColor)
-						.toColor(pausedColor);
-				bubblesPaint.setColor(pausedColor);
-				playbackState.pause(this);
+				pauseDrawable.setAlpha((int) DrawableUtils.between(255 * colorDt, 0, 255));
+				playDrawable.setAlpha((int) DrawableUtils.between(255 * (1 - colorDt), 0, 255));
 			} else {
-				colorChanger
-						.fromColor(pausedColor)
-						.toColor(playingColor);
-				bubblesPaint.setColor(playingColor);
-				playbackState.start(this);
+				playDrawable.setAlpha((int) DrawableUtils.between(255 * colorDt, 0, 255));
+				pauseDrawable.setAlpha((int) DrawableUtils.between(255 * (1 - colorDt), 0, 255));
 			}
-			startBubblesAnimation();
+		}
+		for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
+			bubbleSpeeds[i] = fraction * bubbleSpeedCoefficients[i];
 		}
 	}
 
-	public boolean isAnimationInProgress() {
-		return animatingBubbles;
+	public void onClick() {
+		if (isAnimationInProgress()) {
+			return;
+		}
+		if (playbackState.state() == PlaybackState.STATE_PLAYING) {
+			colorChanger
+					.fromColor(playingColor)
+					.toColor(pausedColor);
+			bubblesPaint.setColor(pausedColor);
+			playbackState.pause(this);
+		} else {
+			colorChanger
+					.fromColor(pausedColor)
+					.toColor(playingColor);
+			bubblesPaint.setColor(playingColor);
+			playbackState.start(this);
+		}
+		startBubblesAnimation();
 	}
 
 	private void startBubblesAnimation() {
-		animatingBubbles = true;
-		startAngle = 360 * random.nextFloat();
+		randomStartAngle = 360 * random.nextFloat();
 		for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
 			float speed = 0.5f + 0.5f * random.nextFloat();
 			float size = BUBBLE_MIN_SIZE + (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE) * random.nextFloat();
 			float radius = size / 2f;
 			bubbleSizes[i] = radius;
-			bubbleSpeeds[i] = speed;
+			bubbleSpeedCoefficients[i] = speed;
 		}
-		setupTimer(ANIMATION_TIME_L, null);
+		bubblesAnimator.start();
 	}
 
-	private void stopAnyAnimation() {
-		animatingBubbles = false;
-		timer.cancel();
-		timer.purge();
-		timer = null;
-		timeInterval.reset();
-		invalidate();
+	public boolean isAnimationInProgress() {
+		return animatingBubbles;
 	}
 
 	public void onTouchDown() {
@@ -145,29 +203,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		float cy = getHeight() >> 1;
 		canvas.scale(buttonSize, buttonSize, cx, cy);
 		if (animatingBubbles) {
-			timeInterval.step();
-			float dur = timeInterval.duration();
-			if (dur > ANIMATION_TIME_F) {
-				dur = ANIMATION_TIME_F;
-			}
-			float dt = DrawableUtils.normalize(dur, 0, ANIMATION_TIME_F);
-			int alpha = (int) DrawableUtils.customFunction(dt, 0, 0, 0, 0.3f, 255, 0.5f, 225, 0.7f, 0, 1f);
-			bubblesPaint.setAlpha(alpha);
-			if (DrawableUtils.isBetween(dur, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F)) {
-				float colorDt = DrawableUtils.normalize(dur, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F);
-				buttonPaint.setColor(colorChanger.nextColor(colorDt));
-				if (playbackState.state() == PlaybackState.STATE_PLAYING) {
-					pauseDrawable.setAlpha((int) DrawableUtils.between(255 * colorDt, 0, 255));
-					playDrawable.setAlpha((int) DrawableUtils.between(255 * (1 - colorDt), 0, 255));
-				} else {
-					playDrawable.setAlpha((int) DrawableUtils.between(255 * colorDt, 0, 255));
-					pauseDrawable.setAlpha((int) DrawableUtils.between(255 * (1 - colorDt), 0, 255));
-				}
-			}
-
 			for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
-				float angle = startAngle + BUBBLES_ANGLE_STEP * i;
-				float speed = dt * bubbleSpeeds[i];
+				float angle = randomStartAngle + BUBBLES_ANGLE_STEP * i;
+				float speed = bubbleSpeeds[i];
 				float x = DrawableUtils.rotateX(cx, cy * (1 - speed), cx, cy, angle);
 				float y = DrawableUtils.rotateY(cx, cy * (1 - speed), cx, cy, angle);
 				canvas.drawCircle(x, y, bubbleSizes[i], bubblesPaint);
@@ -181,6 +219,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		}
 
 		canvas.drawCircle(cx, cy, radius, buttonPaint);
+		float padding = progressPaint.getStrokeWidth() / 2f;
+		bounds.set(cx - radius + padding, cy - radius + padding, cx + radius - padding, cy + radius - padding);
+		canvas.drawArc(bounds, -90, animatedProgress * 360, false, progressPaint);
 
 		int l = (int) (cx - radius + Configuration.BUTTON_PADDING);
 		int t = (int) (cy - radius + Configuration.BUTTON_PADDING);
@@ -194,23 +235,6 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 			pauseDrawable.setBounds(l, t, r, b);
 			pauseDrawable.draw(canvas);
 		}
-	}
-
-	private void setupTimer(long duration, Runnable runnable) {
-		timer = new Timer("PlayPauseButton Timer");
-		timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				postInvalidate();
-			}
-		}, Configuration.UPDATE_INTERVAL, Configuration.UPDATE_INTERVAL);
-		postDelayed(() -> {
-			stopAnyAnimation();
-			if (runnable != null) {
-				runnable.run();
-			}
-		}, duration);
-		timeInterval.step();
 	}
 
 	@Override
@@ -231,7 +255,29 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 
 	@Override
 	public void onProgressChanged(int position, int duration, float percentage) {
+		this.progress = percentage;
+		this.animatedProgress = percentage;
+		invalidate();
+	}
 
+	public void enableProgressChanges(boolean enable) {
+		if (progressChangesEnabled == enable)
+			return;
+		progressChangesEnabled = enable;
+		if (progressChangesEnabled) {
+			animateProgressChanges(0, progress);
+		} else {
+			animateProgressChanges(progress, 0);
+		}
+	}
+
+	private void animateProgressChanges(float oldValue, float newValue) {
+		if (progressAnimator.isRunning()) {
+			progressAnimator.cancel();
+		}
+		progressAnimator.setFloatValues(oldValue, newValue);
+		progressAnimator.setDuration(PROGRESS_CHANGES_DURATION);
+		progressAnimator.start();
 	}
 
 	@Override
