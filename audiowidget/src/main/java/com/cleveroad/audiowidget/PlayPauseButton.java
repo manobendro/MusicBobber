@@ -1,5 +1,6 @@
 package com.cleveroad.audiowidget;
 
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -40,11 +41,13 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private final Drawable pauseDrawable;
 	private final float radius;
 	private final PlaybackState playbackState;
+	private final ValueAnimator touchDownAnimator;
+	private final ValueAnimator touchUpAnimator;
 
 	private boolean animatingBubbles;
 	private Timer timer;
 	private float startAngle;
-
+	private float buttonSize = 1.0f;
 
 	public PlayPauseButton(@NonNull Configuration configuration) {
 		super(configuration.context());
@@ -67,6 +70,14 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.pauseDrawable = configuration.pauseDrawable().getConstantState().newDrawable();
 		this.pauseDrawable.setAlpha(0);
 		this.playbackState.addPlaybackStateListener(this);
+		final ValueAnimator.AnimatorUpdateListener listener = animation -> {
+			buttonSize = (float) animation.getAnimatedValue();
+			invalidate();
+		};
+		this.touchDownAnimator = ValueAnimator.ofFloat(1, 0.9f).setDuration(100);
+		this.touchDownAnimator.addUpdateListener(listener);
+		this.touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1).setDuration(100);
+		this.touchUpAnimator.addUpdateListener(listener);
 	}
 
 	@Override
@@ -120,10 +131,19 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		invalidate();
 	}
 
+	public void onTouchDown() {
+		touchDownAnimator.start();
+	}
+
+	public void onTouchUp() {
+		touchUpAnimator.start();
+	}
+
 	@Override
 	public void onDraw(@NonNull Canvas canvas) {
 		float cx = getWidth() >> 1;
 		float cy = getHeight() >> 1;
+		canvas.scale(buttonSize, buttonSize, cx, cy);
 		if (animatingBubbles) {
 			timeInterval.step();
 			float dur = timeInterval.duration();
@@ -152,6 +172,12 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 				float y = DrawableUtils.rotateY(cx, cy * (1 - speed), cx, cy, angle);
 				canvas.drawCircle(x, y, bubbleSizes[i], bubblesPaint);
 			}
+		} else if (playbackState.state() != PlaybackState.STATE_PLAYING) {
+			playDrawable.setAlpha(255);
+			pauseDrawable.setAlpha(0);
+		} else {
+			playDrawable.setAlpha(0);
+			pauseDrawable.setAlpha(255);
 		}
 
 		canvas.drawCircle(cx, cy, radius, buttonPaint);

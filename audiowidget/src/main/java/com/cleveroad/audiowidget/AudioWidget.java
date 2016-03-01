@@ -205,6 +205,7 @@ public class AudioWidget {
 					animator.start();
 				}
 			}, Configuration.LONG_CLICK_THRESHOLD);
+			playPauseButton.onTouchDown();
 		}
 
 		@Override
@@ -220,6 +221,7 @@ public class AudioWidget {
 		@Override
 		public void onReleased() {
 			super.onReleased();
+			playPauseButton.onTouchUp();
 			released = true;
 			if (removeWidgetShown) {
 				ValueAnimator animator = ValueAnimator.ofFloat(visibleRemWidY, hiddenRemWidY);
