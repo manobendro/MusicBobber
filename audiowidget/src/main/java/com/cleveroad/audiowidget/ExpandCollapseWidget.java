@@ -17,7 +17,7 @@ import android.view.View;
 import java.util.Random;
 
 /**
- * Created by Александр on 25.02.2016.
+ * Expanded state view.
  */
 @SuppressLint("ViewConstructor")
 class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
@@ -153,7 +153,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				animatingExpand = false;
 				expanded = true;
 				if (onWidgetStateChangedListener != null) {
-					onWidgetStateChangedListener.onStateChanged(AudioWidget.State.EXPANDED);
+					onWidgetStateChangedListener.onWidgetStateChanged(AudioWidget.State.EXPANDED);
 				}
 			}
 
@@ -182,7 +182,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				animatingCollapse = false;
 				expanded = false;
 				if (onWidgetStateChangedListener != null) {
-					onWidgetStateChangedListener.onStateChanged(AudioWidget.State.COLLAPSED);
+					onWidgetStateChangedListener.onWidgetStateChanged(AudioWidget.State.COLLAPSED);
 				}
 			}
 
@@ -226,7 +226,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		for (int i = 0; i < buttonBounds.length; i++) {
 			Drawable drawable;
 			if (i == INDEX_PLAY) {
-				if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
+				if (playbackState.state() == Configuration.STATE_PLAYING) {
 					drawable = drawables[INDEX_PAUSE];
 				} else {
 					drawable = drawables[INDEX_PLAY];
@@ -471,7 +471,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		if (isAnimationInProgress())
 			return;
 		animatingExpand = true;
-		if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
+		if (playbackState.state() == Configuration.STATE_PLAYING) {
 			colorChanger
 					.fromColor(playColor)
 					.toColor(widgetColor);
@@ -498,7 +498,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		if (!expanded) {
 			return;
 		}
-		if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
+		if (playbackState.state() == Configuration.STATE_PLAYING) {
 			colorChanger
 					.fromColor(widgetColor)
 					.toColor(playColor);

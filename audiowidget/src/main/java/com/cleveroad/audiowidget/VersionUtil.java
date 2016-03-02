@@ -8,9 +8,9 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 
 /**
- * Created by Александр on 24.02.2016.
+ * Util that dealing with Android versions methods.
  */
-class VersionUtil {
+public class VersionUtil {
 	private VersionUtil() {
 
 	}

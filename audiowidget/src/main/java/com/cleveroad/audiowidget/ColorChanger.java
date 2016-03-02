@@ -3,7 +3,7 @@ package com.cleveroad.audiowidget;
 import android.graphics.Color;
 
 /**
- * Created by Александр on 25.02.2016.
+ * Helper class for changing color.
  */
 class ColorChanger {
 

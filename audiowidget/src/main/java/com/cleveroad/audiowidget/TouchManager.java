@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.WindowManager;
 
 /**
- * Created by Александр on 26.02.2016.
+ * Touch detector for views.
  */
 class TouchManager implements View.OnTouchListener {
 

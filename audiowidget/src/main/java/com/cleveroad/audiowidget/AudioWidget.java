@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.view.GravityCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -76,7 +75,6 @@ public class AudioWidget {
 	private boolean released;
 	private boolean removeWidgetShown;
 	private OnWidgetStateChangedListener onWidgetStateChangedListener;
-	private OnPlaybackStateChangedListener onPlaybackStateChangedListener;
 
 	@SuppressWarnings("deprecation")
 	public AudioWidget(@NonNull Context context) {
@@ -154,43 +152,34 @@ public class AudioWidget {
 				playPauseButton.enableProgressChanges(true);
 			}
 			if (onWidgetStateChangedListener != null) {
-				onWidgetStateChangedListener.onStateChanged(state);
+				onWidgetStateChangedListener.onWidgetStateChanged(state);
 			}
 		});
 		onControlsClickListener = new OnControlsClickListenerWrapper();
 		expandCollapseWidget.onControlsClickListener(onControlsClickListener);
-		playbackState.addPlaybackStateListener(new PlaybackState.PlaybackStateListener() {
-			@Override
-			public void onStateChanged(int oldState, int newState, Object initiator) {
-				if (onPlaybackStateChangedListener != null) {
-					onPlaybackStateChangedListener.onStateChanged(newState);
-				}
-			}
-
-			@Override
-			public void onProgressChanged(int position, int duration, float percentage) {
-
-			}
-		});
 	}
 
+    /**
+     * Create new controller.
+     * @return new controller
+     */
 	@NonNull
 	private Controller newController() {
 		return new Controller() {
 
 			@Override
 			public void start() {
-				playbackState.start(AudioWidget.this);
+				playbackState.start(this);
 			}
 
 			@Override
 			public void pause() {
-				playbackState.pause(AudioWidget.this);
+				playbackState.pause(this);
 			}
 
 			@Override
 			public void stop() {
-				playbackState.stop(AudioWidget.this);
+				playbackState.stop(this);
 			}
 
 			@Override
@@ -224,16 +213,6 @@ public class AudioWidget {
 			}
 
 			@Override
-			public void onPlaybackStateChangedListener(@Nullable OnPlaybackStateChangedListener onPlaybackStateChangedListener) {
-				AudioWidget.this.onPlaybackStateChangedListener = onPlaybackStateChangedListener;
-			}
-
-			@Override
-			public int state() {
-				return playbackState.state();
-			}
-
-			@Override
 			public void albumCover(@Nullable Drawable albumCover) {
 				expandCollapseWidget.albumCover(albumCover);
 			}
@@ -248,7 +227,12 @@ public class AudioWidget {
 		};
 	}
 
-	public void show(int left, int top) {
+    /**
+     * Show widget at specified position.
+     * @param cx center x
+     * @param cy center y
+     */
+	public void show(int cx, int cy) {
 		if (shown) {
 			return;
 		}
@@ -257,9 +241,12 @@ public class AudioWidget {
 		hiddenRemWidY = screenSize.y + radius;
 		visibleRemWidY = screenSize.y - height;
 		show(removeWidgetView, (int) remWidX, (int) hiddenRemWidY);
-		show(playPauseButton, left, top);
+		show(playPauseButton, cx, cy);
 	}
 
+    /**
+     * Hide widget.
+     */
 	public void hide() {
 		if (!shown) {
 			return;
@@ -272,9 +259,24 @@ public class AudioWidget {
 		} catch (IllegalArgumentException e) {
 			// widget not added to window yet
 		}
+        if (onWidgetStateChangedListener != null) {
+            onWidgetStateChangedListener.onWidgetStateChanged(State.REMOVED);
+        }
 	}
 
-	@NonNull
+    /**
+     * Get current visibility state.
+     * @return true if widget shown on screen, false otherwise.
+     */
+    public boolean isShown() {
+        return shown;
+    }
+
+    /**
+     * Get widget controller.
+     * @return widget controller
+     */
+    @NonNull
 	public Controller controller() {
 		return controller;
 	}
@@ -289,7 +291,7 @@ public class AudioWidget {
 						| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
 						| WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
 				PixelFormat.TRANSLUCENT);
-		params.gravity = GravityCompat.START | Gravity.TOP;
+		params.gravity = Gravity.START | Gravity.TOP;
 		params.x = left;
 		params.y = top;
 		windowManager.addView(view, params);
@@ -469,15 +471,16 @@ public class AudioWidget {
 		}
 
 		@Override
-		public void onPlayPauseClicked() {
-			if (playbackState.state() != Controller.STATE_PLAYING) {
-				playbackState.start(AudioWidget.this);
-			} else {
-				playbackState.pause(AudioWidget.this);
-			}
-			if (onControlsClickListener != null) {
-				onControlsClickListener.onPlayPauseClicked();
-			}
+		public boolean onPlayPauseClicked() {
+            if (onControlsClickListener == null || onControlsClickListener.onPlayPauseClicked()) {
+                if (playbackState.state() != Configuration.STATE_PLAYING) {
+                    playbackState.start(AudioWidget.this);
+                } else {
+                    playbackState.pause(AudioWidget.this);
+                }
+                return true;
+            }
+            return false;
 		}
 
 		@Override
@@ -495,45 +498,121 @@ public class AudioWidget {
 		}
 	}
 
+    /**
+     * Audio widget controller.
+     */
 	public interface Controller {
 
-		int STATE_STOPPED = 0;
-		int STATE_PLAYING = 1;
-		int STATE_PAUSED = 2;
+        /**
+         * Start playback.
+         */
+        void start();
 
-		void start();
-		void pause();
-		void stop();
+        /**
+         * Pause playback.
+         */
+        void pause();
+
+        /**
+         * Stop playback.
+         */
+        void stop();
+
+        /**
+         * Get track duration.
+         * @return track duration
+         */
 		int duration();
+
+        /**
+         * Set track duration.
+         * @param duration track duration
+         */
 		void duration(int duration);
+
+        /**
+         * Get track position.
+         * @return track position
+         */
 		int position();
+
+        /**
+         * Set track position.
+         * @param position track position
+         */
 		void position(int position);
+
+        /**
+         * Set controls click listener.
+         * @param onControlsClickListener controls click listener
+         */
 		void onControlsClickListener(@Nullable OnControlsClickListener onControlsClickListener);
+
+        /**
+         * Set widget state change listener.
+         * @param onWidgetStateChangedListener widget state change listener
+         */
 		void onWidgetStateChangedListener(@Nullable OnWidgetStateChangedListener onWidgetStateChangedListener);
-		void onPlaybackStateChangedListener(@Nullable OnPlaybackStateChangedListener onPlaybackStateChangedListener);
-		int state();
+
+        /**
+         * Set album cover.
+         * @param albumCover album cover or null to set default one
+         */
 		void albumCover(@Nullable Drawable albumCover);
-		void albumCover(@Nullable Bitmap bitmap);
+
+        /**
+         * Set album cover.
+         * @param albumCover album cover or null to set default one
+         */
+		void albumCover(@Nullable Bitmap albumCover);
 	}
 
+    /**
+     * Listener for control clicks.
+     */
 	public interface OnControlsClickListener {
-		void onPlaylistClicked();
+
+        /**
+         * Called when playlist button clicked.
+         */
+        void onPlaylistClicked();
+
+        /**
+         * Called when previous track button clicked.
+         */
 		void onPreviousClicked();
-		void onPlayPauseClicked();
+
+        /**
+         * Called when play/pause button clicked.
+         */
+		boolean onPlayPauseClicked();
+
+        /**
+         * Called when next track button clicked.
+         */
 		void onNextClicked();
+
+        /**
+         * Called when album icon clicked.
+         */
 		void onAlbumClicked();
 	}
 
+    /**
+     * Listener for widget state changes.
+     */
 	public interface OnWidgetStateChangedListener {
-		void onStateChanged(@NonNull State state);
-	}
 
-	public interface OnPlaybackStateChangedListener {
-		void onStateChanged(int newState);
+        /**
+         * Called when widget state changed.
+         * @param state new widget state
+         */
+		void onWidgetStateChanged(@NonNull State state);
 	}
 
 	public enum State {
 		COLLAPSED,
-		EXPANDED
+		EXPANDED,
+        REMOVED
 	}
 }

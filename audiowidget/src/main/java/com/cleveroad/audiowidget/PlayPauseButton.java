@@ -13,7 +13,7 @@ import android.view.View;
 import java.util.Random;
 
 /**
- * Created by Александр on 24.02.2016.
+ * Collapsed state view.
  */
 @SuppressLint("ViewConstructor")
 class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
@@ -53,7 +53,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private boolean animatingBubbles;
 	private float randomStartAngle;
 	private float buttonSize = 1.0f;
-	private float progress = 0.75f;
+	private float progress = 0.0f;
 	private float animatedProgress = progress;
 	private boolean progressChangesEnabled;
 
@@ -148,7 +148,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		if (DrawableUtils.isBetween(position, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F)) {
 			float colorDt = DrawableUtils.normalize(position, COLOR_ANIMATION_TIME_START_F, COLOR_ANIMATION_TIME_END_F);
 			buttonPaint.setColor(colorChanger.nextColor(colorDt));
-			if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
+			if (playbackState.state() == Configuration.STATE_PLAYING) {
 				pauseDrawable.setAlpha((int) DrawableUtils.between(255 * colorDt, 0, 255));
 				playDrawable.setAlpha((int) DrawableUtils.between(255 * (1 - colorDt), 0, 255));
 			} else {
@@ -165,7 +165,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		if (isAnimationInProgress()) {
 			return;
 		}
-		if (playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
+		if (playbackState.state() == Configuration.STATE_PLAYING) {
 			colorChanger
 					.fromColor(playingColor)
 					.toColor(pausedColor);
@@ -216,12 +216,20 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 				float y = DrawableUtils.rotateY(cx, cy * (1 - speed), cx, cy, angle);
 				canvas.drawCircle(x, y, bubbleSizes[i], bubblesPaint);
 			}
-		} else if (playbackState.state() != AudioWidget.Controller.STATE_PLAYING) {
+		} else if (playbackState.state() != Configuration.STATE_PLAYING) {
 			playDrawable.setAlpha(255);
 			pauseDrawable.setAlpha(0);
+            // in case widget was drawn without animation in different state
+            if (buttonPaint.getColor() != pausedColor) {
+                buttonPaint.setColor(pausedColor);
+            }
 		} else {
 			playDrawable.setAlpha(0);
 			pauseDrawable.setAlpha(255);
+            // in case widget was drawn without animation in different state
+            if (buttonPaint.getColor() != playingColor) {
+                buttonPaint.setColor(playingColor);
+            }
 		}
 
 		canvas.drawCircle(cx, cy, radius, buttonPaint);
@@ -233,11 +241,11 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		int t = (int) (cy - radius + buttonPadding);
 		int r = (int) (cx + radius - buttonPadding);
 		int b = (int) (cy + radius - buttonPadding);
-		if (animatingBubbles || playbackState.state() != AudioWidget.Controller.STATE_PLAYING) {
+		if (animatingBubbles || playbackState.state() != Configuration.STATE_PLAYING) {
 			playDrawable.setBounds(l, t, r, b);
 			playDrawable.draw(canvas);
 		}
-		if (animatingBubbles || playbackState.state() == AudioWidget.Controller.STATE_PLAYING) {
+		if (animatingBubbles || playbackState.state() == Configuration.STATE_PLAYING) {
 			pauseDrawable.setBounds(l, t, r, b);
 			pauseDrawable.draw(canvas);
 		}
@@ -247,7 +255,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	public void onStateChanged(int oldState, int newState, Object initiator) {
 		if (initiator instanceof AudioWidget)
 			return;
-		if (newState == AudioWidget.Controller.STATE_PLAYING) {
+		if (newState == Configuration.STATE_PLAYING) {
 			buttonPaint.setColor(playingColor);
 			pauseDrawable.setAlpha(255);
 			playDrawable.setAlpha(0);
@@ -256,14 +264,14 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 			pauseDrawable.setAlpha(0);
 			playDrawable.setAlpha(255);
 		}
-		invalidate();
+		postInvalidate();
 	}
 
 	@Override
 	public void onProgressChanged(int position, int duration, float percentage) {
 		this.progress = percentage;
 		this.animatedProgress = percentage;
-		invalidate();
+		postInvalidate();
 	}
 
 	public void enableProgressChanges(boolean enable) {

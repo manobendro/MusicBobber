@@ -8,7 +8,7 @@ import android.support.annotation.Nullable;
 import java.util.Random;
 
 /**
- * Created by Александр on 24.02.2016.
+ * Audio widget configuration class.
  */
 class Configuration {
 
@@ -16,6 +16,9 @@ class Configuration {
 
     public static final long CLICK_THRESHOLD = 200;
 	public static final long LONG_CLICK_THRESHOLD = 400;
+    public static final int STATE_STOPPED = 0;
+    public static final int STATE_PLAYING = 1;
+    public static final int STATE_PAUSED = 2;
 
     private final int lightColor;
 	private final int darkColor;

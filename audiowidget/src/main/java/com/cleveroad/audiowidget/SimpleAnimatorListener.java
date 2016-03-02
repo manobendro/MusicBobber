@@ -3,7 +3,7 @@ package com.cleveroad.audiowidget;
 import android.animation.Animator;
 
 /**
- * Created by Александр on 01.03.2016.
+ * Simple implementation of animator listener.
  */
 class SimpleAnimatorListener implements Animator.AnimatorListener {
 	@Override

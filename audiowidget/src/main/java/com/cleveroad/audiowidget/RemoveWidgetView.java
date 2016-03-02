@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
 import android.view.View;
 
 /**
- * Created by Александр on 29.02.2016.
+ * Remove widget view.
  */
 @SuppressLint("ViewConstructor")
 class RemoveWidgetView extends View {

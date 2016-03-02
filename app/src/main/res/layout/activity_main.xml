@@ -5,4 +5,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cleveroad.audiowidget.example.MainActivity">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <TextView
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/no_music_found"
+        android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Title"
+        android:visibility="gone"
+        tools:visibility="visible"
+        />
+
 </FrameLayout>

@@ -6,11 +6,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by Александр on 26.02.2016.
+ * Helper class for managing playback state.
  */
 class PlaybackState {
 
-	private int state;
+	private int state = Configuration.STATE_STOPPED;
 
 	private int position;
 	private int duration;
@@ -53,15 +53,15 @@ class PlaybackState {
 	}
 
 	public void start(Object initiator) {
-		state(AudioWidget.Controller.STATE_PLAYING, initiator);
+		state(Configuration.STATE_PLAYING, initiator);
 	}
 
 	public void pause(Object initiator) {
-		state(AudioWidget.Controller.STATE_PAUSED, initiator);
+		state(Configuration.STATE_PAUSED, initiator);
 	}
 
 	public void stop(Object initiator) {
-		state(AudioWidget.Controller.STATE_STOPPED, initiator);
+		state(Configuration.STATE_STOPPED, initiator);
 		position(0);
 	}
 
@@ -82,7 +82,7 @@ class PlaybackState {
 		}
 	}
 
-	public interface PlaybackStateListener {
+	interface PlaybackStateListener {
 
 		void onStateChanged(int oldState, int newState, Object initiator);
 
