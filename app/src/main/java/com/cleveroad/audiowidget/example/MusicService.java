@@ -3,11 +3,13 @@ package com.cleveroad.audiowidget.example;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -33,6 +35,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private static final String EXTRA_FILE_URIS = "EXTRA_FILE_URIS";
     private static final String EXTRA_SELECT_TRACK = "EXTRA_SELECT_TRACK";
     private static final long UPDATE_INTERVAL = 1000;
+    private static final String KEY_POSITION_X = "position_x";
+    private static final String KEY_POSITION_Y = "position_y";
 
     private AudioWidget audioWidget;
     private MediaPlayer mediaPlayer;
@@ -42,6 +46,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private boolean paused;
     private Timer timer;
     private CropCircleTransformation cropCircleTransformation;
+    private SharedPreferences preferences;
 
 
     public static void setTracks(@NonNull Context context, @NonNull MusicItem[] tracks) {
@@ -65,6 +70,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onCreate() {
         super.onCreate();
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnCompletionListener(this);
@@ -148,12 +154,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void onDestroy() {
         audioWidget.hide();
         audioWidget = null;
-        mediaPlayer.stop();
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+        }
         mediaPlayer.reset();
         mediaPlayer.release();
         mediaPlayer = null;
         stopTrackingPosition();
         cropCircleTransformation = null;
+        preferences = null;
         super.onDestroy();
     }
 
@@ -162,7 +171,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         preparing = false;
         mediaPlayer.start();
         if (!audioWidget.isShown()) {
-            audioWidget.show(0, 0);
+            audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
         }
         audioWidget.controller().start();
         audioWidget.controller().duration((int) items.get(playingIndex).duration());
@@ -283,5 +292,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         if (state == AudioWidget.State.REMOVED) {
             stopSelf();
         }
+    }
+
+    @Override
+    public void onWidgetPositionChanged(int cx, int cy) {
+        preferences.edit()
+                .putInt(KEY_POSITION_X, cx)
+                .putInt(KEY_POSITION_Y, cy)
+                .apply();
     }
 }

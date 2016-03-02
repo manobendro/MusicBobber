@@ -2,6 +2,8 @@ package com.cleveroad.audiowidget.example;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -32,7 +34,8 @@ import java.util.Collection;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Collection<MusicItem>>, SearchView.OnQueryTextListener {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Collection<MusicItem>>,
+        SearchView.OnQueryTextListener {
 
     private static final int MUSIC_LOADER_ID = 1;
     private static final int OVERLAY_PERMISSION_REQ_CODE = 1;
@@ -64,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     @Override
                     public void onItemClick(RecyclerView parent, View view, int position, long id) {
                         MusicItem item = adapter.getItem(position);
+                        if (!isServiceRunning(MusicService.class)) {
+                            MusicService.setTracks(MainActivity.this, adapter.getSnapshot().toArray(new MusicItem[adapter.getNonFilteredCount()]));
+                        }
                         MusicService.playTrack(MainActivity.this, item);
                     }
                 });
@@ -215,5 +221,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onDestroy() {
         emptyViewObserver.unbind();
         super.onDestroy();
+    }
+
+    private boolean isServiceRunning(@NonNull Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
