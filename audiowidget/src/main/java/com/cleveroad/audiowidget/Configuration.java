@@ -13,13 +13,11 @@ import java.util.Random;
 class Configuration {
 
 	public static final float FRAME_SPEED = 70.0f;
-	public static final int BUTTON_PADDING = 24;
 
-	public static final long CLICK_THRESHOLD = 200;
+    public static final long CLICK_THRESHOLD = 200;
 	public static final long LONG_CLICK_THRESHOLD = 400;
-	public static final float MOVEMENT_THRESHOLD = 10.0f;
 
-	private final int lightColor;
+    private final int lightColor;
 	private final int darkColor;
 	private final int progressColor;
 	private final int expandedColor;
@@ -34,6 +32,17 @@ class Configuration {
 	private final Drawable albumDrawable;
 	private final Context context;
 	private final PlaybackState playbackState;
+    private final int buttonPadding;
+    private final float crossStrokeWidth;
+    private final float progressStrokeWidth;
+    private final float shadowRadius;
+    private final float shadowDx;
+    private final float shadowDy;
+    private final int shadowColor;
+    private final float bubblesMinSize;
+    private final float bubblesMaxSize;
+    private final int crossColor;
+    private final int crossOverlappedColor;
 
 	private Configuration(Builder builder) {
 		this.context = builder.context;
@@ -51,6 +60,17 @@ class Configuration {
 		this.nextDrawable = builder.nextDrawable;
 		this.albumDrawable = builder.albumDrawable;
 		this.playbackState = builder.playbackState;
+        this.buttonPadding = builder.buttonPadding;
+        this.crossStrokeWidth = builder.crossStrokeWidth;
+        this.progressStrokeWidth = builder.progressStrokeWidth;
+        this.shadowRadius = builder.shadowRadius;
+        this.shadowDx = builder.shadowDx;
+        this.shadowDy = builder.shadowDy;
+        this.shadowColor = builder.shadowColor;
+        this.bubblesMinSize = builder.bubblesMinSize;
+        this.bubblesMaxSize = builder.bubblesMaxSize;
+        this.crossColor = builder.crossColor;
+        this.crossOverlappedColor = builder.crossOverlappedColor;
 	}
 
 	public Context context() {
@@ -117,7 +137,51 @@ class Configuration {
 		return playbackState;
 	}
 
-	public static final class Builder {
+    public float crossStrokeWidth() {
+        return crossStrokeWidth;
+    }
+
+    public float progressStrokeWidth() {
+        return progressStrokeWidth;
+    }
+
+    public int buttonPadding() {
+        return buttonPadding;
+    }
+
+    public float shadowRadius() {
+        return shadowRadius;
+    }
+
+    public float shadowDx() {
+        return shadowDx;
+    }
+
+    public float shadowDy() {
+        return shadowDy;
+    }
+
+    public int shadowColor() {
+        return shadowColor;
+    }
+
+    public float bubblesMinSize() {
+        return bubblesMinSize;
+    }
+
+    public float bubblesMaxSize() {
+        return bubblesMaxSize;
+    }
+
+    public int crossColor() {
+        return crossColor;
+    }
+
+    public int crossOverlappedColor() {
+        return crossOverlappedColor;
+    }
+
+    public static final class Builder {
 
 		private int lightColor;
 		private int darkColor;
@@ -134,6 +198,17 @@ class Configuration {
 		private Drawable playlistDrawable;
 		private Drawable albumDrawable;
 		private PlaybackState playbackState;
+        private int buttonPadding;
+        private float crossStrokeWidth;
+        private float progressStrokeWidth;
+        private float shadowRadius;
+        private float shadowDx;
+        private float shadowDy;
+        private int shadowColor;
+        private float bubblesMinSize;
+        private float bubblesMaxSize;
+        private int crossColor;
+        private int crossOverlappedColor;
 
 		public Builder context(Context context) {
 			this.context = context;
@@ -210,7 +285,62 @@ class Configuration {
 			return this;
 		}
 
-		public Configuration build() {
+        public Builder buttonPadding(int buttonPadding) {
+            this.buttonPadding = buttonPadding;
+            return this;
+        }
+
+        public Builder crossStrokeWidth(float crossStrokeWidth) {
+            this.crossStrokeWidth = crossStrokeWidth;
+            return this;
+        }
+
+        public Builder progressStrokeWidth(float progressStrokeWidth) {
+            this.progressStrokeWidth = progressStrokeWidth;
+            return this;
+        }
+
+        public Builder shadowRadius(float shadowRadius) {
+            this.shadowRadius = shadowRadius;
+            return this;
+        }
+
+        public Builder shadowDx(float shadowDx) {
+            this.shadowDx = shadowDx;
+            return this;
+        }
+
+        public Builder shadowDy(float shadowDy) {
+            this.shadowDy = shadowDy;
+            return this;
+        }
+
+        public Builder shadowColor(@ColorInt int shadowColor) {
+            this.shadowColor = shadowColor;
+            return this;
+        }
+
+        public Builder bubblesMinSize(float bubblesMinSize) {
+            this.bubblesMinSize = bubblesMinSize;
+            return this;
+        }
+
+        public Builder bubblesMaxSize(float bubblesMaxSize) {
+            this.bubblesMaxSize = bubblesMaxSize;
+            return this;
+        }
+
+        public Builder crossColor(@ColorInt int crossColor) {
+            this.crossColor = crossColor;
+            return this;
+        }
+
+        public Builder crossOverlappedColor(@ColorInt int crossOverlappedColor) {
+            this.crossOverlappedColor = crossOverlappedColor;
+            return this;
+        }
+
+        public Configuration build() {
 			return new Configuration(this);
 		}
 	}

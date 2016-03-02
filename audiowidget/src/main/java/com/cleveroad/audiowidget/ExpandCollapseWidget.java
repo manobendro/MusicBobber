@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -23,8 +22,8 @@ import java.util.Random;
 @SuppressLint("ViewConstructor")
 class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
 
-	static final byte DIRECTION_LEFT = 1;
-	static final byte DIRECTION_RIGHT = 2;
+	static final int DIRECTION_LEFT = 1;
+	static final int DIRECTION_RIGHT = 2;
 
 	private static final float EXPAND_DURATION_F = (34 * Configuration.FRAME_SPEED);
 	private static final long EXPAND_DURATION_L = (long) EXPAND_DURATION_F;
@@ -80,12 +79,13 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private final ValueAnimator expandAnimator;
 	private final ValueAnimator collapseAnimator;
 	private final Drawable defaultAlbumCover;
+    private final int buttonPadding;
 
 	private float bubblesTime;
 	private boolean expanded;
 	private boolean animatingExpand, animatingCollapse;
 	private boolean updatedBubbles;
-	private byte expandDirection;
+	private int expandDirection;
 	private AudioWidget.OnWidgetStateChangedListener onWidgetStateChangedListener;
 	private int padding;
 	private AudioWidget.OnControlsClickListener onControlsClickListener;
@@ -102,13 +102,19 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.paint = new Paint();
 		this.paint.setColor(configuration.expandedColor());
 		this.paint.setAntiAlias(true);
-		this.paint.setShadowLayer(10, 2, 2, Color.argb(80, 0, 0, 0));
+		this.paint.setShadowLayer(
+                configuration.shadowRadius(),
+                configuration.shadowDx(),
+                configuration.shadowDy(),
+                configuration.shadowColor()
+        );
 		this.radius = configuration.radius();
 		this.widgetWidth = configuration.widgetWidth();
 		this.colorChanger = new ColorChanger();
 		this.playColor = configuration.darkColor();
 		this.pauseColor = configuration.lightColor();
 		this.widgetColor = configuration.expandedColor();
+        this.buttonPadding = configuration.buttonPadding();
 		this.tmpRect = new Rect();
 		this.buttonBounds = new Rect[5];
 		this.drawables = new Drawable[6];
@@ -186,7 +192,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				animatingCollapse = false;
 			}
 		});
-		this.padding = (int) DrawableUtils.dpToPx(configuration.context(), 4);
+		this.padding = configuration.context().getResources().getDimensionPixelSize(R.dimen.aw_expand_collapse_widget_padding);
 	}
 
 	@Override
@@ -331,7 +337,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	}
 
 	private void calculateBounds(int index, Rect bounds) {
-		calculateBounds(index, bounds, Configuration.BUTTON_PADDING);
+		calculateBounds(index, bounds, buttonPadding);
 	}
 
 	private void calculateBounds(int index, Rect bounds, int padding) {
@@ -454,7 +460,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 	}
 
-	public void expand(byte expandDirection) {
+	public void expand(int expandDirection) {
 		if (expanded)
 			return;
 		this.expandDirection = expandDirection;
@@ -519,7 +525,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		return this;
 	}
 
-	public byte expandDirection() {
+	public int expandDirection() {
 		return expandDirection;
 	}
 

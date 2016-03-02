@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -19,8 +18,6 @@ import java.util.Random;
 @SuppressLint("ViewConstructor")
 class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
 
-	private static final float BUBBLE_MIN_SIZE = 10;
-	private static final float BUBBLE_MAX_SIZE = 20;
 	private static final float BUBBLES_ANGLE_STEP = 18.0f;
 	private static final float ANIMATION_TIME_F = 12 * Configuration.FRAME_SPEED;
 	private static final long ANIMATION_TIME_L = (long) ANIMATION_TIME_F;
@@ -49,6 +46,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private final ValueAnimator touchUpAnimator;
 	private final ValueAnimator bubblesAnimator;
 	private final ValueAnimator progressAnimator;
+    private final float buttonPadding;
+    private final float bubblesMinSize;
+    private final float bubblesMaxSize;
 
 	private boolean animatingBubbles;
 	private float randomStartAngle;
@@ -57,7 +57,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private float animatedProgress = progress;
 	private boolean progressChangesEnabled;
 
-	public PlayPauseButton(@NonNull Configuration configuration) {
+    public PlayPauseButton(@NonNull Configuration configuration) {
 		super(configuration.context());
 		setLayerType(LAYER_TYPE_SOFTWARE, null);
 		this.playbackState = configuration.playbackState();
@@ -66,18 +66,26 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.buttonPaint.setColor(configuration.lightColor());
 		this.buttonPaint.setStyle(Paint.Style.FILL);
 		this.buttonPaint.setAntiAlias(true);
-		this.buttonPaint.setShadowLayer(10, 2, 2, Color.argb(80, 0, 0, 0));
+		this.buttonPaint.setShadowLayer(
+                configuration.shadowRadius(),
+                configuration.shadowDx(),
+                configuration.shadowDy(),
+                configuration.shadowColor()
+        );
+        this.bubblesMinSize = configuration.bubblesMinSize();
+        this.bubblesMaxSize = configuration.bubblesMaxSize();
 		this.bubblesPaint = new Paint();
 		this.bubblesPaint.setStyle(Paint.Style.FILL);
 		this.progressPaint = new Paint();
 		this.progressPaint.setAntiAlias(true);
 		this.progressPaint.setStyle(Paint.Style.STROKE);
-		this.progressPaint.setStrokeWidth(DrawableUtils.dpToPx(configuration.context(), 4));
+		this.progressPaint.setStrokeWidth(configuration.progressStrokeWidth());
 		this.progressPaint.setColor(configuration.progressColor());
 		this.pausedColor = configuration.lightColor();
 		this.playingColor = configuration.darkColor();
 		this.radius = configuration.radius();
-		this.bounds = new RectF();
+        this.buttonPadding = configuration.buttonPadding();
+        this.bounds = new RectF();
 		this.bubbleSizes = new float[TOTAL_BUBBLES_COUNT];
 		this.bubbleSpeeds = new float[TOTAL_BUBBLES_COUNT];
 		this.bubbleSpeedCoefficients = new float[TOTAL_BUBBLES_COUNT];
@@ -175,7 +183,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		randomStartAngle = 360 * random.nextFloat();
 		for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
 			float speed = 0.5f + 0.5f * random.nextFloat();
-			float size = BUBBLE_MIN_SIZE + (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE) * random.nextFloat();
+			float size = bubblesMinSize + (bubblesMaxSize - bubblesMinSize) * random.nextFloat();
 			float radius = size / 2f;
 			bubbleSizes[i] = radius;
 			bubbleSpeedCoefficients[i] = speed;
@@ -221,10 +229,10 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		bounds.set(cx - radius + padding, cy - radius + padding, cx + radius - padding, cy + radius - padding);
 		canvas.drawArc(bounds, -90, animatedProgress * 360, false, progressPaint);
 
-		int l = (int) (cx - radius + Configuration.BUTTON_PADDING);
-		int t = (int) (cy - radius + Configuration.BUTTON_PADDING);
-		int r = (int) (cx + radius - Configuration.BUTTON_PADDING);
-		int b = (int) (cy + radius - Configuration.BUTTON_PADDING);
+		int l = (int) (cx - radius + buttonPadding);
+		int t = (int) (cy - radius + buttonPadding);
+		int r = (int) (cx + radius - buttonPadding);
+		int b = (int) (cy + radius - buttonPadding);
 		if (animatingBubbles || playbackState.state() != AudioWidget.Controller.STATE_PLAYING) {
 			playDrawable.setBounds(l, t, r, b);
 			playDrawable.draw(canvas);

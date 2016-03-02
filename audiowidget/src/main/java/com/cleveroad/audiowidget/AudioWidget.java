@@ -71,7 +71,6 @@ public class AudioWidget {
 	 */
 	private float visibleRemWidY;
 	private float width, height, radius;
-	private final int colorDark, colorLight;
 	private final OnControlsClickListenerWrapper onControlsClickListener;
 	private boolean shown;
 	private boolean released;
@@ -93,7 +92,7 @@ public class AudioWidget {
 			screenSize.x = windowManager.getDefaultDisplay().getWidth();
 			screenSize.y = windowManager.getDefaultDisplay().getHeight();
 		}
-		screenSize.y -= DrawableUtils.dpToPx(context, 25); // status bar height
+		screenSize.y -= context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
 		this.playbackState = new PlaybackState();
 		height = context.getResources().getDimensionPixelSize(R.dimen.aw_player_height);
 		width = context.getResources().getDimensionPixelSize(R.dimen.aw_player_width);
@@ -103,8 +102,6 @@ public class AudioWidget {
 		int lightColor = VersionUtil.color(context, R.color.aw_light);
 		int progressColor = VersionUtil.color(context, R.color.aw_progress);
 		int expandColor = VersionUtil.color(context, R.color.aw_expanded);
-		this.colorDark = darkColor;
-		this.colorLight = lightColor;
 
 		Drawable playDrawable = VersionUtil.drawable(context, R.drawable.ic_play);
 		Drawable pauseDrawable = VersionUtil.drawable(context, R.drawable.ic_pause);
@@ -129,12 +126,24 @@ public class AudioWidget {
 				.nextDrawable(nextDrawable)
 				.pauseDrawable(pauseDrawable)
 				.albumDrawable(albumDrawable)
+                .buttonPadding(context.getResources().getDimensionPixelSize(R.dimen.aw_button_padding))
+                .crossStrokeWidth(context.getResources().getDimension(R.dimen.aw_cross_stroke_width))
+                .progressStrokeWidth(context.getResources().getDimension(R.dimen.aw_progress_stroke_width))
+                .shadowRadius(context.getResources().getDimension(R.dimen.aw_shadow_radius))
+                .shadowDx(context.getResources().getDimension(R.dimen.aw_shadow_dx))
+                .shadowDy(context.getResources().getDimension(R.dimen.aw_shadow_dy))
+                .shadowColor(VersionUtil.color(context, R.color.aw_shadow))
+                .bubblesMinSize(context.getResources().getDimension(R.dimen.aw_bubbles_min_size))
+                .bubblesMaxSize(context.getResources().getDimension(R.dimen.aw_bubbles_max_size))
+                .crossColor(VersionUtil.color(context, R.color.aw_cross_default))
+                .crossOverlappedColor(VersionUtil.color(context, R.color.aw_cross_overlapped))
 				.build();
 		playPauseButton = new PlayPauseButton(configuration);
 		expandCollapseWidget = new ExpandCollapseWidget(configuration);
 		removeWidgetView = new RemoveWidgetView(configuration);
-		TouchManager playPauseButtonManager = TouchManager.create(playPauseButton);
-		TouchManager expandedWidgetManager = TouchManager.create(expandCollapseWidget);
+        float smt = context.getResources().getDimensionPixelSize(R.dimen.aw_significant_movement_threshold);
+		TouchManager playPauseButtonManager = TouchManager.create(playPauseButton, Configuration.CLICK_THRESHOLD, Configuration.LONG_CLICK_THRESHOLD, smt);
+		TouchManager expandedWidgetManager = TouchManager.create(expandCollapseWidget, Configuration.CLICK_THRESHOLD, Configuration.LONG_CLICK_THRESHOLD, smt);
 
 		playPauseButtonManager.callback(new PlayPauseButtonCallback());
 		expandedWidgetManager.callback(new ExpandCollapseWidgetCallback());
@@ -327,7 +336,7 @@ public class AudioWidget {
 			WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
 			int x = params.x;
 			int y = params.y;
-			byte expandDirection;
+			int expandDirection;
 			if (x + height > screenSize.x / 2) {
 				expandDirection = ExpandCollapseWidget.DIRECTION_LEFT;
 			} else {
@@ -365,7 +374,7 @@ public class AudioWidget {
 			boolean curReadyToRemove = isReadyToRemove();
 			if (curReadyToRemove != readyToRemove) {
 				readyToRemove = curReadyToRemove;
-				removeWidgetView.setColor(readyToRemove ? colorDark : colorLight);
+				removeWidgetView.setOverlapped(readyToRemove);
 			}
 		}
 

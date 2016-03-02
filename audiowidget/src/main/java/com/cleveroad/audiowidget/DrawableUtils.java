@@ -1,7 +1,5 @@
 package com.cleveroad.audiowidget;
 
-import android.content.Context;
-
 /**
  * Helpful utils class.
  */
@@ -125,7 +123,4 @@ class DrawableUtils {
 		return endValue + (startValue - endValue) * (1 - time);
 	}
 
-	public static float dpToPx(Context context, float dp) {
-		return dp * context.getResources().getDisplayMetrics().density;
-	}
 }

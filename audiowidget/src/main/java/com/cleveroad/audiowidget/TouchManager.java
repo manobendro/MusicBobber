@@ -16,6 +16,10 @@ class TouchManager implements View.OnTouchListener {
 	private final float[] bounds;
 	private final int rootWidth;
 	private final int rootHeight;
+    private final long clickThreshold;
+    private final long longClickThreshold;
+    private final float significantMovementThreshold;
+
 
 	private long onDownTimestamp;
 	private boolean longClickCanceled;
@@ -34,13 +38,16 @@ class TouchManager implements View.OnTouchListener {
 	private boolean downCalled;
 	private Callback callback;
 
-	private TouchManager(@NonNull View view) {
+	private TouchManager(@NonNull View view, long clickThreshold, long longClickThreshold, float significantMovementThreshold) {
 		this.view = view;
+        this.clickThreshold = clickThreshold;
+        this.longClickThreshold = longClickThreshold;
+        this.significantMovementThreshold = significantMovementThreshold;
 		this.view.setOnTouchListener(this);
 		Context context = view.getContext().getApplicationContext();
 		this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 		this.rootWidth = context.getResources().getDisplayMetrics().widthPixels;
-		this.rootHeight = (int) (context.getResources().getDisplayMetrics().heightPixels - DrawableUtils.dpToPx(context, 25));
+		this.rootHeight = context.getResources().getDisplayMetrics().heightPixels - context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
 
 		this.bounds = new float[2];
 	}
@@ -75,7 +82,7 @@ class TouchManager implements View.OnTouchListener {
 							callback.onLongClick(prevX, prevY);
 						}
 					}
-				}, Configuration.LONG_CLICK_THRESHOLD);
+				}, longClickThreshold);
 				if (callback != null) {
 					callback.onTouched();
 				}
@@ -96,7 +103,7 @@ class TouchManager implements View.OnTouchListener {
 					l = bounds[0];
 					t = bounds[1];
 				}
-				movedFarEnough = Math.hypot(diffX, diffY) >= Configuration.MOVEMENT_THRESHOLD;
+				movedFarEnough = Math.hypot(diffX, diffY) >= significantMovementThreshold;
 				layoutParams.x = (int) l;
 				layoutParams.y = (int) t;
 				windowManager.updateViewLayout(view, layoutParams);
@@ -108,10 +115,10 @@ class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_UP: {
 				long curTime = System.currentTimeMillis();
 				long diff = curTime - onDownTimestamp;
-				if (diff <= Configuration.LONG_CLICK_THRESHOLD) {
+				if (diff <= longClickThreshold) {
 					longClickCanceled = true;
 				}
-				if (diff <= Configuration.CLICK_THRESHOLD) {
+				if (diff <= clickThreshold) {
 					if (callback != null) {
 						callback.onClick(prevX, prevY);
 					}
@@ -135,8 +142,8 @@ class TouchManager implements View.OnTouchListener {
 		view.postDelayed(runnable, delayMillis);
 	}
 
-	public static TouchManager create(View view) {
-		return new TouchManager(view);
+	public static TouchManager create(@NonNull View view, long clickThreshold, long longClickThreshold, float significantMovementThreshold) {
+		return new TouchManager(view, clickThreshold, longClickThreshold, significantMovementThreshold);
 	}
 
 	interface Callback {

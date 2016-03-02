@@ -3,7 +3,6 @@ package com.cleveroad.audiowidget;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.view.View;
 
@@ -16,16 +15,20 @@ class RemoveWidgetView extends View {
 	private final float size;
 	private final float radius;
 	private final Paint paint;
+    private final int defaultColor;
+    private final int overlappedColor;
 
 	public RemoveWidgetView(@NonNull Configuration configuration) {
 		super(configuration.context());
 		this.radius = configuration.radius();
 		this.size = configuration.radius() * 2;
 		this.paint = new Paint();
+        this.defaultColor = configuration.crossColor();
+        this.overlappedColor = configuration.crossOverlappedColor();
 		paint.setAntiAlias(true);
 		paint.setStyle(Paint.Style.STROKE);
-		paint.setStrokeWidth(DrawableUtils.dpToPx(configuration.context(), 4));
-		paint.setColor(configuration.lightColor());
+		paint.setStrokeWidth(configuration.crossStrokeWidth());
+		paint.setColor(configuration.crossColor());
 		paint.setStrokeCap(Paint.Cap.ROUND);
 	}
 
@@ -59,8 +62,17 @@ class RemoveWidgetView extends View {
 		canvas.drawLine(x1, y1, x2, y2, paint);
 	}
 
-	public void setColor(@ColorInt int color) {
-		paint.setColor(color);
-		invalidate();
-	}
+    public void setOverlapped(boolean overlapped) {
+        if (overlapped) {
+            if (paint.getColor() != overlappedColor) {
+                paint.setColor(overlappedColor);
+                invalidate();
+            }
+        } else {
+            if (paint.getColor() != defaultColor) {
+                paint.setColor(defaultColor);
+                invalidate();
+            }
+        }
+    }
 }
