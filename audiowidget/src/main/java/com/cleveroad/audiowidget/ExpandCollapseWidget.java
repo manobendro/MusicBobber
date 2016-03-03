@@ -20,7 +20,7 @@ import java.util.Random;
  * Expanded state view.
  */
 @SuppressLint("ViewConstructor")
-class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
+class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
 
 	static final int DIRECTION_LEFT = 1;
 	static final int DIRECTION_RIGHT = 2;
@@ -529,6 +529,10 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		return expandDirection;
 	}
 
+    public void expandDirection(int expandDirection) {
+        this.expandDirection = expandDirection;
+    }
+
 	public void onControlsClickListener(AudioWidget.OnControlsClickListener onControlsClickListener) {
 		this.onControlsClickListener = onControlsClickListener;
 	}
@@ -547,4 +551,31 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		Rect bounds = buttonBounds[INDEX_ALBUM];
 		invalidate(bounds.left, bounds.top, bounds.right, bounds.bottom);
 	}
+
+    @Override
+    public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
+        float bLeft = left;
+        float bTop = top + radius;
+        float size = radius * 2;
+        float bRight = bLeft + widgetWidth;
+        float bBottom = bTop + widgetHeight;
+
+        if (bRight < size + padding) {
+            bRight = size + padding;
+            bLeft = bRight - widgetWidth;
+        }
+        if (bLeft > screenWidth - size - padding) {
+            bLeft = screenWidth - size - padding;
+        }
+        if (bTop < 0) {
+            bTop = 0;
+        }
+
+        if (bBottom > screenHeight) {
+            bBottom = screenHeight;
+            bTop = bBottom - size - padding;
+        }
+        outBounds[0] = bLeft;
+        outBounds[1] = bTop - radius;
+    }
 }

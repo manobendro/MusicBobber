@@ -459,6 +459,14 @@ public class AudioWidget {
 
         @Override
         public void onTouchOutside() {
+            WindowManager.LayoutParams params = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
+            if (params.x < 0 && expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
+                expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_LEFT);
+                updatePlayPauseButtonPosition();
+            } else if (params.x + width > screenSize.x && expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_LEFT) {
+                expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_RIGHT);
+                updatePlayPauseButtonPosition();
+            }
             expandCollapseWidget.collapse();
         }
 
@@ -470,6 +478,10 @@ public class AudioWidget {
         @Override
         public void onMoved(float diffX, float diffY) {
             super.onMoved(diffX, diffY);
+            updatePlayPauseButtonPosition();
+        }
+
+        private void updatePlayPauseButtonPosition() {
             WindowManager.LayoutParams widgetParams = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
             WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
             if (expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
