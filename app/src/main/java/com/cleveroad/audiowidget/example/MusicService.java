@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.IBinder;
@@ -187,6 +188,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                     public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
                         if (audioWidget != null) {
                             audioWidget.controller().albumCover(resource);
+                        }
+                    }
+
+                    @Override
+                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                        super.onLoadFailed(e, errorDrawable);
+                        if (audioWidget != null) {
+                            audioWidget.controller().albumCover((Drawable)null);
                         }
                     }
                 });

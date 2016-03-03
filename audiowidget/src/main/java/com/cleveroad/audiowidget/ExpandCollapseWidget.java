@@ -54,8 +54,6 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private static final int INDEX_PAUSE = 5;
 
 	private static final int TOTAL_BUBBLES_COUNT = 30;
-	private static final float BUBBLE_MIN_SIZE = 10;
-	private static final float BUBBLE_MAX_SIZE = 25;
 
 
 	private final Paint paint;
@@ -72,6 +70,8 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private final float[] bubbleSizes;
 	private final float[] bubbleSpeeds;
 	private final float[] bubblePositions;
+    private final float bubblesMinSize;
+    private final float bubblesMaxSize;
 	private final Random random;
 	private final Paint bubblesPaint;
 	private final RectF bounds;
@@ -81,16 +81,20 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private final ValueAnimator collapseAnimator;
 	private final Drawable defaultAlbumCover;
     private final int buttonPadding;
+    private final int prevNextExtraPadding;
     private final Interpolator accDecInterpolator;
+    private final ValueAnimator touchDownAnimator;
+    private final ValueAnimator touchUpAnimator;
+    private final ValueAnimator bubblesTouchAnimator;
 
 	private float bubblesTime;
 	private boolean expanded;
 	private boolean animatingExpand, animatingCollapse;
-	private boolean updatedBubbles;
 	private int expandDirection;
 	private AudioWidget.OnWidgetStateChangedListener onWidgetStateChangedListener;
 	private int padding;
 	private AudioWidget.OnControlsClickListener onControlsClickListener;
+    private int touchedButtonIndex;
 
 	public ExpandCollapseWidget(@NonNull Configuration configuration) {
 		super(configuration.context());
@@ -102,6 +106,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.bubblesPaint.setStyle(Paint.Style.FILL);
 		this.bubblesPaint.setAntiAlias(true);
 		this.bubblesPaint.setColor(configuration.expandedColor());
+        this.bubblesPaint.setAlpha(0);
 		this.paint = new Paint();
 		this.paint.setColor(configuration.expandedColor());
 		this.paint.setAntiAlias(true);
@@ -118,6 +123,9 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.pauseColor = configuration.lightColor();
 		this.widgetColor = configuration.expandedColor();
         this.buttonPadding = configuration.buttonPadding();
+        this.prevNextExtraPadding = configuration.prevNextExtraPadding();
+        this.bubblesMinSize = configuration.bubblesMinSize();
+        this.bubblesMaxSize = configuration.bubblesMaxSize();
 		this.tmpRect = new Rect();
 		this.buttonBounds = new Rect[5];
 		this.drawables = new Drawable[6];
@@ -196,7 +204,51 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			}
 		});
 		this.padding = configuration.context().getResources().getDimensionPixelSize(R.dimen.aw_expand_collapse_widget_padding);
-	}
+        ValueAnimator.AnimatorUpdateListener listener = animation -> {
+            if (touchedButtonIndex == -1 || touchedButtonIndex >= buttonBounds.length) {
+                return;
+            }
+            calculateBounds(touchedButtonIndex, tmpRect);
+            Rect rect = buttonBounds[touchedButtonIndex];
+            float width = tmpRect.width() * (float) animation.getAnimatedValue() / 2;
+            float height = tmpRect.height() * (float) animation.getAnimatedValue() / 2;
+            int l = (int) (tmpRect.centerX() - width);
+            int r = (int) (tmpRect.centerX() + width);
+            int t = (int) (tmpRect.centerY() - height);
+            int b = (int) (tmpRect.centerY() + height);
+            rect.set(l, t, r, b);
+            invalidate(rect);
+        };
+        touchDownAnimator = ValueAnimator.ofFloat(1, 0.9f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
+        touchDownAnimator.addUpdateListener(listener);
+        touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
+        touchUpAnimator.addUpdateListener(listener);
+        bubblesTouchAnimator = ValueAnimator.ofFloat(0, EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F)
+                .setDuration((long) (EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F));
+        bubblesTouchAnimator.addUpdateListener(animation -> {
+            bubblesTime = animation.getAnimatedFraction();
+            bubblesPaint.setAlpha((int) DrawableUtils.customFunction(bubblesTime, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
+            invalidate();
+        });
+        bubblesTouchAnimator.addListener(new SimpleAnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                bubblesTime = 0;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+                bubblesTime = 0;
+            }
+        });
+    }
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -207,7 +259,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 
 	@Override
 	protected void onDraw(@NonNull Canvas canvas) {
-		if (animatingExpand && bubblesTime >= 0) {
+		if (bubblesTime >= 0) {
 			int half = TOTAL_BUBBLES_COUNT / 2;
 			for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
 				float radius = bubbleSizes[i];
@@ -314,35 +366,20 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			calculateBounds(INDEX_PLAY, buttonBounds[INDEX_PLAY]);
 		}
 		if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
-			if (!updatedBubbles) {
-				updatedBubbles = true;
-				int half = TOTAL_BUBBLES_COUNT / 2;
-				float step = widgetWidth / half;
-				for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
-					int index = i % half;
-					float speed = 0.3f + 0.7f * random.nextFloat();
-					float size = BUBBLE_MIN_SIZE + (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE) * random.nextFloat();
-					float radius = size / 2f;
-					float cx = padding + index * step + step * random.nextFloat() * (random.nextBoolean() ? 1 : -1);
-					float cy = bounds.centerY();
-					bubbleSpeeds[i] = speed;
-					bubbleSizes[i] = radius;
-					bubblePositions[2 * i] = cx;
-					bubblePositions[2 * i + 1] = cy;
-				}
-			}
 			float time = DrawableUtils.normalize(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F);
 			bubblesPaint.setAlpha((int) DrawableUtils.customFunction(time, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
-		} else if (position > EXPAND_BUBBLES_END_F) {
-			updatedBubbles = false;
 		}
-		if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
+        if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
 			bubblesTime = DrawableUtils.normalize(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F);
 		}
 	}
 
 	private void calculateBounds(int index, Rect bounds) {
-		calculateBounds(index, bounds, buttonPadding);
+        int padding = buttonPadding;
+        if (index == INDEX_PREV || index == INDEX_NEXT) {
+            padding += prevNextExtraPadding;
+        }
+		calculateBounds(index, bounds, padding);
 	}
 
 	private void calculateBounds(int index, Rect bounds, int padding) {
@@ -405,9 +442,12 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 
 	private void expandCollapseElements(float time) {
 		int alpha = (int) DrawableUtils.between(time * 255, 0, 255);
-		for (int i = 0; i < buttonBounds.length; i++) {
-			if (i != INDEX_PLAY) {
-				int padding = 16;
+        for (int i = 0; i < buttonBounds.length; i++) {
+            if (i != INDEX_PLAY) {
+                int padding = buttonPadding;
+                if (i == INDEX_PREV || i == INDEX_NEXT) {
+                    padding += prevNextExtraPadding;
+                }
 				calculateBounds(i, buttonBounds[i]);
 				float size = time * (sizeStep / 2f - padding);
 				int cx = buttonBounds[i].centerX();
@@ -421,14 +461,13 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	public void onClick(float x, float y) {
 		if (isAnimationInProgress())
 			return;
-		int index = -1;
-		for (int i = 0; i < buttonBounds.length; i++) {
-			calculateBounds(i, tmpRect, 0);
-			if (tmpRect.contains((int) x, (int) y)) {
-				index = i;
-				break;
-			}
-		}
+        int index = getTouchedAreaIndex((int) x, (int) y);
+        if (index == INDEX_PLAY || index == INDEX_PREV || index == INDEX_NEXT) {
+            if (!bubblesTouchAnimator.isRunning()) {
+                randomizeBubblesPosition();
+                bubblesTouchAnimator.start();
+            }
+        }
 		switch (index) {
 			case INDEX_PLAYLIST: {
 				if (onControlsClickListener != null) {
@@ -467,7 +506,19 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 	}
 
-	public void expand(int expandDirection) {
+    private int getTouchedAreaIndex(int x, int y) {
+        int index = -1;
+        for (int i = 0; i < buttonBounds.length; i++) {
+            calculateBounds(i, tmpRect, 0);
+            if (tmpRect.contains(x, y)) {
+                index = i;
+                break;
+            }
+        }
+        return index;
+    }
+
+    public void expand(int expandDirection) {
 		if (expanded)
 			return;
 		this.expandDirection = expandDirection;
@@ -488,10 +539,28 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 					.fromColor(pauseColor)
 					.toColor(widgetColor);
 		}
+        randomizeBubblesPosition();
 		expandAnimator.start();
 	}
 
-	private void startCollapseAnimation() {
+    private void randomizeBubblesPosition() {
+        int half = TOTAL_BUBBLES_COUNT / 2;
+        float step = widgetWidth / half;
+        for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
+            int index = i % half;
+            float speed = 0.3f + 0.7f * random.nextFloat();
+            float size = bubblesMinSize + (bubblesMaxSize - bubblesMinSize) * random.nextFloat();
+            float radius = size / 2f;
+            float cx = padding + index * step + step * random.nextFloat() * (random.nextBoolean() ? 1 : -1);
+            float cy = widgetHeight + padding;
+            bubbleSpeeds[i] = speed;
+            bubbleSizes[i] = radius;
+            bubblePositions[2 * i] = cx;
+            bubblePositions[2 * i + 1] = cy;
+        }
+    }
+
+    private void startCollapseAnimation() {
 		if (isAnimationInProgress())
 			return;
 		collapseAnimator.start();
@@ -584,5 +653,21 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         }
         outBounds[0] = bLeft;
         outBounds[1] = bTop - radius;
+    }
+
+    public void onTouched(float x, float y) {
+        int index = getTouchedAreaIndex((int) x, (int) y);
+        if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
+            touchedButtonIndex = index;
+            touchDownAnimator.start();
+        }
+    }
+
+    public void onReleased(float x, float y) {
+        int index = getTouchedAreaIndex((int) x, (int) y);
+        if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
+            touchedButtonIndex = index;
+            touchUpAnimator.start();
+        }
     }
 }

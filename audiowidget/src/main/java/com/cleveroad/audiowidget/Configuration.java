@@ -20,6 +20,7 @@ class Configuration {
     public static final int STATE_STOPPED = 0;
     public static final int STATE_PLAYING = 1;
     public static final int STATE_PAUSED = 2;
+    public static final long TOUCH_ANIMATION_DURATION = 100;
 
     private final int lightColor;
 	private final int darkColor;
@@ -48,6 +49,7 @@ class Configuration {
     private final int crossColor;
     private final int crossOverlappedColor;
     private final Interpolator accDecInterpolator;
+    private final int prevNextExtraPadding;
 
 	private Configuration(Builder builder) {
 		this.context = builder.context;
@@ -77,6 +79,7 @@ class Configuration {
         this.crossColor = builder.crossColor;
         this.crossOverlappedColor = builder.crossOverlappedColor;
         this.accDecInterpolator = builder.accDecInterpolator;
+        this.prevNextExtraPadding = builder.prevNextExtraPadding;
 	}
 
 	public Context context() {
@@ -191,6 +194,10 @@ class Configuration {
         return accDecInterpolator;
     }
 
+    public int prevNextExtraPadding() {
+        return prevNextExtraPadding;
+    }
+
     public static final class Builder {
 
 		private int lightColor;
@@ -220,8 +227,9 @@ class Configuration {
         private int crossColor;
         private int crossOverlappedColor;
         private Interpolator accDecInterpolator;
+        private int prevNextExtraPadding;
 
-		public Builder context(Context context) {
+        public Builder context(Context context) {
 			this.context = context;
 			return this;
 		}
@@ -356,8 +364,13 @@ class Configuration {
             return this;
         }
 
+        public Builder prevNextExtraPadding(int prevNextExtraPadding) {
+            this.prevNextExtraPadding = prevNextExtraPadding;
+            return this;
+        }
+
         public Configuration build() {
 			return new Configuration(this);
 		}
-	}
+    }
 }

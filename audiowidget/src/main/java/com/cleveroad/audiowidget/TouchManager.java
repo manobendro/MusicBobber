@@ -84,7 +84,7 @@ class TouchManager implements View.OnTouchListener {
 					}
 				}, longClickThreshold);
 				if (callback != null) {
-					callback.onTouched();
+					callback.onTouched(prevX, prevY);
 				}
 				return true;
 			}
@@ -124,7 +124,7 @@ class TouchManager implements View.OnTouchListener {
 					}
 				}
 				if (callback != null) {
-					callback.onReleased();
+					callback.onReleased(prevX, prevY);
 				}
 				return true;
 			}
@@ -150,9 +150,9 @@ class TouchManager implements View.OnTouchListener {
 		void onClick(float x, float y);
 		void onLongClick(float x, float y);
 		void onTouchOutside();
-		void onTouched();
+		void onTouched(float x, float y);
 		void onMoved(float diffX, float diffY);
-		void onReleased();
+		void onReleased(float x, float y);
 		boolean canBeTouched();
 	}
 
@@ -174,7 +174,7 @@ class TouchManager implements View.OnTouchListener {
 		}
 
 		@Override
-		public void onTouched() {
+		public void onTouched(float x, float y) {
 
 		}
 
@@ -184,7 +184,7 @@ class TouchManager implements View.OnTouchListener {
 		}
 
 		@Override
-		public void onReleased() {
+		public void onReleased(float x, float y) {
 
 		}
 

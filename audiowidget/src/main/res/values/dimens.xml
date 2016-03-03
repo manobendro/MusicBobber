@@ -3,8 +3,9 @@
     <dimen name="aw_player_height">60dp</dimen>
     <dimen name="aw_player_width">300dp</dimen>
     <dimen name="aw_button_size">48dp</dimen>
-    <dimen name="aw_button_padding">10dp</dimen>
-    <dimen name="aw_significant_movement_threshold">5dp</dimen>
+    <dimen name="aw_button_padding">7dp</dimen>
+    <dimen name="aw_prev_next_button_extra_padding">3dp</dimen>
+    <dimen name="aw_significant_movement_threshold">10dp</dimen>
     <dimen name="aw_status_bar_height">25dp</dimen>
     <dimen name="aw_expand_collapse_widget_padding">4dp</dimen>
     <dimen name="aw_progress_stroke_width">4dp</dimen>

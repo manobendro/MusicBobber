@@ -152,6 +152,7 @@ public class AudioWidget {
         float shadowDy = builder.shadowDySet ? builder.shadowDy : context.getResources().getDimension(R.dimen.aw_shadow_dy);
         float bubblesMinSize = builder.bubblesMinSizeSet ? builder.bubblesMinSize : context.getResources().getDimension(R.dimen.aw_bubbles_min_size);
         float bubblesMaxSize = builder.bubblesMaxSizeSet ? builder.bubblesMaxSize : context.getResources().getDimension(R.dimen.aw_bubbles_max_size);
+        int prevNextExtraPadding = context.getResources().getDimensionPixelSize(R.dimen.aw_prev_next_button_extra_padding);
 
         height = context.getResources().getDimensionPixelSize(R.dimen.aw_player_height);
         width = context.getResources().getDimensionPixelSize(R.dimen.aw_player_width);
@@ -175,6 +176,7 @@ public class AudioWidget {
                 .pauseDrawable(pauseDrawable)
                 .albumDrawable(albumDrawable)
                 .buttonPadding(buttonPadding)
+                .prevNextExtraPadding(prevNextExtraPadding)
                 .crossStrokeWidth(crossStrokeWidth)
                 .progressStrokeWidth(progressStrokeWidth)
                 .shadowRadius(shadowRadius)
@@ -270,7 +272,7 @@ public class AudioWidget {
         shown = true;
         float remWidX = screenSize.x / 2 - radius;
         hiddenRemWidY = screenSize.y + radius;
-        visibleRemWidY = screenSize.y - height;
+        visibleRemWidY = screenSize.y - height - radius;
         show(removeWidgetView, (int) remWidX, (int) hiddenRemWidY);
         show(playPauseButton, (int) (cx - height), (int) (cy - height));
     }
@@ -388,8 +390,8 @@ public class AudioWidget {
         }
 
         @Override
-        public void onTouched() {
-            super.onTouched();
+        public void onTouched(float x, float y) {
+            super.onTouched(x, y);
             released = false;
             handler.postDelayed(() -> {
                 if (!released) {
@@ -414,8 +416,8 @@ public class AudioWidget {
         }
 
         @Override
-        public void onReleased() {
-            super.onReleased();
+        public void onReleased(float x, float y) {
+            super.onReleased(x, y);
             playPauseButton.onTouchUp();
             released = true;
             if (removeWidgetShown) {
@@ -455,6 +457,19 @@ public class AudioWidget {
     }
 
     private class ExpandCollapseWidgetCallback extends TouchManager.SimpleCallback {
+
+        @Override
+        public void onTouched(float x, float y) {
+            super.onTouched(x, y);
+            expandCollapseWidget.onTouched(x, y);
+        }
+
+        @Override
+        public void onReleased(float x, float y) {
+            super.onReleased(x, y);
+            expandCollapseWidget.onReleased(x, y);
+        }
+
         @Override
         public void onClick(float x, float y) {
             expandCollapseWidget.onClick(x, y);

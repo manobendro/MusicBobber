@@ -27,7 +27,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private static final int TOTAL_BUBBLES_COUNT = (int) (360 / BUBBLES_ANGLE_STEP);
 	static final long PROGRESS_CHANGES_DURATION = (long) (8 * Configuration.FRAME_SPEED);
 
-	private final Paint buttonPaint;
+    private final Paint buttonPaint;
 	private final Paint bubblesPaint;
 	private final Paint progressPaint;
 	private final int pausedColor;
@@ -98,9 +98,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 			buttonSize = (float) animation.getAnimatedValue();
 			invalidate();
 		};
-		this.touchDownAnimator = ValueAnimator.ofFloat(1, 0.9f).setDuration(100);
+		this.touchDownAnimator = ValueAnimator.ofFloat(1, 0.9f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
 		this.touchDownAnimator.addUpdateListener(listener);
-		this.touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1).setDuration(100);
+		this.touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
 		this.touchUpAnimator.addUpdateListener(listener);
 		this.bubblesAnimator = ValueAnimator.ofInt(0, (int)ANIMATION_TIME_L).setDuration(ANIMATION_TIME_L);
 		this.bubblesAnimator.addUpdateListener(animation -> {
