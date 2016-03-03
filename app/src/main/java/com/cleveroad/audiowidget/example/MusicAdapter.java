@@ -17,7 +17,7 @@ import butterknife.ButterKnife;
 import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 /**
- * Created by Александр on 02.03.2016.
+ * Adapter for list of tracks.
  */
 class MusicAdapter extends BaseRecyclerViewAdapter<MusicItem, MusicAdapter.MusicViewHolder> {
 

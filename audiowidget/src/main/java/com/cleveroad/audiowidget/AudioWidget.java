@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.RectF;
@@ -11,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.Gravity;
@@ -42,7 +44,7 @@ public class AudioWidget {
     /**
      * Playback state.
      */
-    private final PlaybackState playbackState;
+    private PlaybackState playbackState;
 
     /**
      * Widget controller.
@@ -77,8 +79,8 @@ public class AudioWidget {
     private OnWidgetStateChangedListener onWidgetStateChangedListener;
 
     @SuppressWarnings("deprecation")
-    public AudioWidget(@NonNull Context context) {
-        this.context = context.getApplicationContext();
+    private AudioWidget(@NonNull Builder builder) {
+        this.context = builder.context.getApplicationContext();
         this.handler = new Handler();
         this.screenSize = new Point();
         this.removeBounds = new RectF();
@@ -91,51 +93,8 @@ public class AudioWidget {
             screenSize.y = windowManager.getDefaultDisplay().getHeight();
         }
         screenSize.y -= context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
-        this.playbackState = new PlaybackState();
-        height = context.getResources().getDimensionPixelSize(R.dimen.aw_player_height);
-        width = context.getResources().getDimensionPixelSize(R.dimen.aw_player_width);
-        radius = height / 2f;
 
-        int darkColor = VersionUtil.color(context, R.color.aw_dark);
-        int lightColor = VersionUtil.color(context, R.color.aw_light);
-        int progressColor = VersionUtil.color(context, R.color.aw_progress);
-        int expandColor = VersionUtil.color(context, R.color.aw_expanded);
-
-        Drawable playDrawable = VersionUtil.drawable(context, R.drawable.ic_play);
-        Drawable pauseDrawable = VersionUtil.drawable(context, R.drawable.ic_pause);
-        Drawable prevDrawable = VersionUtil.drawable(context, R.drawable.ic_prev);
-        Drawable nextDrawable = VersionUtil.drawable(context, R.drawable.ic_next);
-        Drawable playlistDrawable = VersionUtil.drawable(context, R.drawable.ic_playlist);
-        Drawable albumDrawable = VersionUtil.drawable(context, R.drawable.ic_default_album);
-
-        Configuration configuration = new Configuration.Builder()
-                .context(context)
-                .playbackState(playbackState)
-                .random(new Random())
-                .darkColor(darkColor)
-                .playColor(lightColor)
-                .progressColor(progressColor)
-                .expandedColor(expandColor)
-                .widgetWidth(width)
-                .radius(radius)
-                .playlistDrawable(playlistDrawable)
-                .playDrawable(playDrawable)
-                .prevDrawable(prevDrawable)
-                .nextDrawable(nextDrawable)
-                .pauseDrawable(pauseDrawable)
-                .albumDrawable(albumDrawable)
-                .buttonPadding(context.getResources().getDimensionPixelSize(R.dimen.aw_button_padding))
-                .crossStrokeWidth(context.getResources().getDimension(R.dimen.aw_cross_stroke_width))
-                .progressStrokeWidth(context.getResources().getDimension(R.dimen.aw_progress_stroke_width))
-                .shadowRadius(context.getResources().getDimension(R.dimen.aw_shadow_radius))
-                .shadowDx(context.getResources().getDimension(R.dimen.aw_shadow_dx))
-                .shadowDy(context.getResources().getDimension(R.dimen.aw_shadow_dy))
-                .shadowColor(VersionUtil.color(context, R.color.aw_shadow))
-                .bubblesMinSize(context.getResources().getDimension(R.dimen.aw_bubbles_min_size))
-                .bubblesMaxSize(context.getResources().getDimension(R.dimen.aw_bubbles_max_size))
-                .crossColor(VersionUtil.color(context, R.color.aw_cross_default))
-                .crossOverlappedColor(VersionUtil.color(context, R.color.aw_cross_overlapped))
-                .build();
+        Configuration configuration = prepareConfiguration(builder);
         playPauseButton = new PlayPauseButton(configuration);
         expandCollapseWidget = new ExpandCollapseWidget(configuration);
         removeWidgetView = new RemoveWidgetView(configuration);
@@ -165,6 +124,65 @@ public class AudioWidget {
         });
         onControlsClickListener = new OnControlsClickListenerWrapper();
         expandCollapseWidget.onControlsClickListener(onControlsClickListener);
+    }
+
+    private Configuration prepareConfiguration(@NonNull Builder builder) {
+        int darkColor = builder.darkColorSet ? builder.darkColor : VersionUtil.color(context, R.color.aw_dark);
+        int lightColor = builder.lightColorSet ? builder.lightColor : VersionUtil.color(context, R.color.aw_light);
+        int progressColor = builder.progressColorSet ? builder.progressColor : VersionUtil.color(context, R.color.aw_progress);
+        int expandColor = builder.expandWidgetColorSet ? builder.expandWidgetColor : VersionUtil.color(context, R.color.aw_expanded);
+        int crossColor = builder.crossColorSet ? builder.crossColor : VersionUtil.color(context, R.color.aw_cross_default);
+        int crossOverlappedColor = builder.crossOverlappedColorSet ? builder.crossOverlappedColor : VersionUtil.color(context, R.color.aw_cross_overlapped);
+        int shadowColor = builder.shadowColorSet ? builder.shadowColor : VersionUtil.color(context, R.color.aw_shadow);
+
+        Drawable playDrawable = builder.playDrawable != null ? builder.playDrawable : VersionUtil.drawable(context, R.drawable.ic_play);
+        Drawable pauseDrawable = builder.pauseDrawable != null ? builder.pauseDrawable : VersionUtil.drawable(context, R.drawable.ic_pause);
+        Drawable prevDrawable = builder.prevDrawable != null ? builder.prevDrawable : VersionUtil.drawable(context, R.drawable.ic_prev);
+        Drawable nextDrawable = builder.nextDrawable != null ? builder.nextDrawable : VersionUtil.drawable(context, R.drawable.ic_next);
+        Drawable playlistDrawable = builder.playlistDrawable != null ? builder.playlistDrawable : VersionUtil.drawable(context, R.drawable.ic_playlist);
+        Drawable albumDrawable = builder.defaultAlbumDrawable != null ? builder.defaultAlbumDrawable : VersionUtil.drawable(context, R.drawable.ic_default_album);
+
+        int buttonPadding = builder.buttonPaddingSet ? builder.buttonPadding : context.getResources().getDimensionPixelSize(R.dimen.aw_button_padding);
+        float crossStrokeWidth = builder.crossStrokeWidthSet ? builder.crossStrokeWidth : context.getResources().getDimension(R.dimen.aw_cross_stroke_width);
+        float progressStrokeWidth = builder.progressStrokeWidthSet ? builder.progressStrokeWidth : context.getResources().getDimension(R.dimen.aw_progress_stroke_width);
+        float shadowRadius = builder.shadowRadiusSet ? builder.shadowRadius : context.getResources().getDimension(R.dimen.aw_shadow_radius);
+        float shadowDx = builder.shadowDxSet ? builder.shadowDx : context.getResources().getDimension(R.dimen.aw_shadow_dx);
+        float shadowDy = builder.shadowDySet ? builder.shadowDy : context.getResources().getDimension(R.dimen.aw_shadow_dy);
+        float bubblesMinSize = builder.bubblesMinSizeSet ? builder.bubblesMinSize : context.getResources().getDimension(R.dimen.aw_bubbles_min_size);
+        float bubblesMaxSize = builder.bubblesMaxSizeSet ? builder.bubblesMaxSize : context.getResources().getDimension(R.dimen.aw_bubbles_max_size);
+
+        height = context.getResources().getDimensionPixelSize(R.dimen.aw_player_height);
+        width = context.getResources().getDimensionPixelSize(R.dimen.aw_player_width);
+        radius = height / 2f;
+        playbackState = new PlaybackState();
+        return new Configuration.Builder()
+                .context(context)
+                .playbackState(playbackState)
+                .random(new Random())
+                .darkColor(darkColor)
+                .playColor(lightColor)
+                .progressColor(progressColor)
+                .expandedColor(expandColor)
+                .widgetWidth(width)
+                .radius(radius)
+                .playlistDrawable(playlistDrawable)
+                .playDrawable(playDrawable)
+                .prevDrawable(prevDrawable)
+                .nextDrawable(nextDrawable)
+                .pauseDrawable(pauseDrawable)
+                .albumDrawable(albumDrawable)
+                .buttonPadding(buttonPadding)
+                .crossStrokeWidth(crossStrokeWidth)
+                .progressStrokeWidth(progressStrokeWidth)
+                .shadowRadius(shadowRadius)
+                .shadowDx(shadowDx)
+                .shadowDy(shadowDy)
+                .shadowColor(shadowColor)
+                .bubblesMinSize(bubblesMinSize)
+                .bubblesMaxSize(bubblesMaxSize)
+                .crossColor(crossColor)
+                .crossOverlappedColor(crossOverlappedColor)
+                .build();
     }
 
     /**
@@ -516,6 +534,313 @@ public class AudioWidget {
                 onControlsClickListener.onAlbumClicked();
             }
         }
+    }
+
+    public static class Builder {
+
+        private final Context context;
+
+        @ColorInt
+        private int darkColor;
+        @ColorInt
+        private int lightColor;
+        @ColorInt
+        private int progressColor;
+        @ColorInt
+        private int crossColor;
+        @ColorInt
+        private int crossOverlappedColor;
+        @ColorInt
+        private int shadowColor;
+        @ColorInt
+        private int expandWidgetColor;
+        private int buttonPadding;
+        private float crossStrokeWidth;
+        private float progressStrokeWidth;
+        private float shadowRadius;
+        private float shadowDx;
+        private float shadowDy;
+        private float bubblesMinSize;
+        private float bubblesMaxSize;
+        private Drawable playDrawable;
+        private Drawable prevDrawable;
+        private Drawable nextDrawable;
+        private Drawable playlistDrawable;
+        private Drawable defaultAlbumDrawable;
+        private Drawable pauseDrawable;
+        private boolean darkColorSet;
+        private boolean lightColorSet;
+        private boolean progressColorSet;
+        private boolean crossColorSet;
+        private boolean crossOverlappedColorSet;
+        private boolean shadowColorSet;
+        private boolean expandWidgetColorSet;
+        private boolean buttonPaddingSet;
+        private boolean crossStrokeWidthSet;
+        private boolean progressStrokeWidthSet;
+        private boolean shadowRadiusSet;
+        private boolean shadowDxSet;
+        private boolean shadowDySet;
+        private boolean bubblesMinSizeSet;
+        private boolean bubblesMaxSizeSet;
+
+        public Builder(@NonNull Context context) {
+            this.context = context;
+        }
+
+        /**
+         * Set dark color (playing state).
+         * @param darkColor dark color
+         */
+        public Builder darkColor(@ColorInt int darkColor) {
+            this.darkColor = darkColor;
+            darkColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set light color (paused state).
+         * @param lightColor light color
+         */
+        public Builder lightColor(@ColorInt int lightColor) {
+            this.lightColor = lightColor;
+            lightColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set progress bar color.
+         * @param progressColor progress bar color
+         */
+        public Builder progressColor(@ColorInt int progressColor) {
+            this.progressColor = progressColor;
+            progressColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set remove widget cross color.
+         * @param crossColor cross color
+         */
+        public Builder crossColor(@ColorInt int crossColor) {
+            this.crossColor = crossColor;
+            crossColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set remove widget cross color in overlapped state (audio widget overlapped remove widget).
+         * @param crossOverlappedColor cross color in overlapped state
+         */
+        public Builder crossOverlappedColor(@ColorInt int crossOverlappedColor) {
+            this.crossOverlappedColor = crossOverlappedColor;
+            crossOverlappedColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set shadow color.
+         * @param shadowColor shadow color
+         */
+        public Builder shadowColor(@ColorInt int shadowColor) {
+            this.shadowColor = shadowColor;
+            shadowColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set widget color in expanded state.
+         * @param expandWidgetColor widget color in expanded state
+         */
+        public Builder expandWidgetColor(@ColorInt int expandWidgetColor) {
+            this.expandWidgetColor = expandWidgetColor;
+            expandWidgetColorSet = true;
+            return this;
+        }
+
+        /**
+         * Set button padding in pixels. Default value: 10dp.
+         * @param buttonPadding button padding
+         */
+        public Builder buttonPadding(int buttonPadding) {
+            this.buttonPadding = buttonPadding;
+            buttonPaddingSet = true;
+            return this;
+        }
+
+        /**
+         * Set stroke width of remove widget. Default value: 4dp.
+         * @param crossStrokeWidth stroke width of remove widget
+         */
+        public Builder crossStrokeWidth(float crossStrokeWidth) {
+            this.crossStrokeWidth = crossStrokeWidth;
+            crossStrokeWidthSet = true;
+            return this;
+        }
+
+        /**
+         * Set stroke width of progress bar. Default value: 4dp.
+         * @param progressStrokeWidth stroke width of progress bar
+         */
+        public Builder progressStrokeWidth(float progressStrokeWidth) {
+            this.progressStrokeWidth = progressStrokeWidth;
+            progressStrokeWidthSet = true;
+            return this;
+        }
+
+        /**
+         * Set shadow radius. Default value: 5dp.
+         * @param shadowRadius shadow radius.
+         * @see Paint#setShadowLayer(float, float, float, int)
+         */
+        public Builder shadowRadius(float shadowRadius) {
+            this.shadowRadius = shadowRadius;
+            shadowRadiusSet = true;
+            return this;
+        }
+
+        /**
+         * Set shadow dx. Default value: 1dp.
+         * @param shadowDx shadow dx
+         * @see Paint#setShadowLayer(float, float, float, int)
+         */
+        public Builder shadowDx(float shadowDx) {
+            this.shadowDx = shadowDx;
+            shadowDxSet = true;
+            return this;
+        }
+
+        /**
+         * Set shadow dx. Default value: 1dp.
+         * @param shadowDy shadow dy
+         * @see Paint#setShadowLayer(float, float, float, int)
+         */
+        public Builder shadowDy(float shadowDy) {
+            this.shadowDy = shadowDy;
+            shadowDySet = true;
+            return this;
+        }
+
+        /**
+         * Set bubbles minimum size in pixels. Default value: 5dp.
+         * @param bubblesMinSize bubbles minimum size
+         */
+        public Builder bubblesMinSize(float bubblesMinSize) {
+            this.bubblesMinSize = bubblesMinSize;
+            bubblesMinSizeSet = true;
+            return this;
+        }
+
+        /**
+         * Set bubbles maximum size in pixels. Default value: 10dp.
+         * @param bubblesMaxSize bubbles maximum size
+         */
+        public Builder bubblesMaxSize(float bubblesMaxSize) {
+            this.bubblesMaxSize = bubblesMaxSize;
+            bubblesMaxSizeSet = true;
+            return this;
+        }
+
+        /**
+         * Set drawable for play button.
+         * @param playDrawable drawable for play button
+         */
+        public Builder playDrawable(@NonNull Drawable playDrawable) {
+            this.playDrawable = playDrawable;
+            return this;
+        }
+
+        /**
+         * Set drawable for previous track button.
+         * @param prevDrawable drawable for previous track button
+         */
+        public Builder prevTrackDrawale(@NonNull Drawable prevDrawable) {
+            this.prevDrawable = prevDrawable;
+            return this;
+        }
+
+        /**
+         * Set drawable for next track button.
+         * @param nextDrawable drawable for next track button.
+         */
+        public Builder nextTrackDrawable(@NonNull Drawable nextDrawable) {
+            this.nextDrawable = nextDrawable;
+            return this;
+        }
+
+        /**
+         * Set drawable for playlist button.
+         * @param playlistDrawable drawable for playlist button
+         */
+        public Builder playlistDrawable(@NonNull Drawable playlistDrawable) {
+            this.playlistDrawable = playlistDrawable;
+            return this;
+        }
+
+        /**
+         * Set drawable for default album icon.
+         * @param defaultAlbumCover drawable for default album icon
+         */
+        public Builder defaultAlbumDrawable(@NonNull Drawable defaultAlbumCover) {
+            this.defaultAlbumDrawable = defaultAlbumCover;
+            return this;
+        }
+
+        /**
+         * Set drawable for pause button.
+         * @param pauseDrawable drawable for pause button
+         */
+        public Builder pauseDrawable(@NonNull Drawable pauseDrawable) {
+            this.pauseDrawable = pauseDrawable;
+            return this;
+        }
+
+        /**
+         * Create new audio widget.
+         * @return new audio widget
+         * @throws IllegalStateException if size parameters have wrong values (less than zero).
+         */
+        public AudioWidget build() {
+            if (buttonPaddingSet) {
+                checkOrThrow(buttonPadding, "Button padding");
+            }
+            if (shadowRadiusSet) {
+                checkOrThrow(shadowRadius, "Shadow radius");
+            }
+            if (shadowDxSet) {
+                checkOrThrow(shadowDx, "Shadow dx");
+            }
+            if (shadowDySet) {
+                checkOrThrow(shadowDy, "Shadow dy");
+            }
+            if (bubblesMinSizeSet) {
+                checkOrThrow(bubblesMinSize, "Bubbles min size");
+            }
+            if (bubblesMaxSizeSet) {
+                checkOrThrow(bubblesMaxSize, "Bubbles max size");
+            }
+            if (bubblesMinSizeSet && bubblesMaxSizeSet && bubblesMaxSize < bubblesMinSize) {
+                throw new IllegalArgumentException("Bubbles max size must be greater than bubbles min size");
+            }
+            if (crossStrokeWidthSet) {
+                checkOrThrow(crossStrokeWidth, "Cross stroke width");
+            }
+            if (progressStrokeWidthSet) {
+                checkOrThrow(progressStrokeWidth, "Progress stroke width");
+            }
+            return new AudioWidget(this);
+        }
+
+        private void checkOrThrow(int number, String name) {
+            if (number < 0)
+                throw new IllegalArgumentException(name + " must be equals or greater zero.");
+        }
+
+        private void checkOrThrow(float number, String name) {
+            if (number < 0)
+                throw new IllegalArgumentException(name + " must be equals or greater zero.");
+        }
+
     }
 
     /**

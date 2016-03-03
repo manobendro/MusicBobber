@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Александр on 02.03.2016.
+ * Filter for list of tracks.
  */
 class MusicFilter extends BaseFilter<MusicItem> {
 

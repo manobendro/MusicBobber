@@ -5,7 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by Александр on 02.03.2016.
+ * Music track model.
  */
 class MusicItem implements Parcelable {
     private String title;

@@ -223,6 +223,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         super.onDestroy();
     }
 
+    /**
+     * Check if service is running.
+     * @param serviceClass
+     * @return
+     */
     private boolean isServiceRunning(@NonNull Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {

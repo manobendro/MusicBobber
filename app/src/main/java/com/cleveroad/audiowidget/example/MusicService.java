@@ -27,7 +27,7 @@ import java.util.TimerTask;
 import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 /**
- * Created by Александр on 02.03.2016.
+ * Simple implementation of music service.
  */
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioWidget.OnControlsClickListener, AudioWidget.OnWidgetStateChangedListener {
@@ -76,7 +76,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        audioWidget = new AudioWidget(this);
+        audioWidget = new AudioWidget.Builder(this).build();
         audioWidget.controller().onControlsClickListener(this);
         audioWidget.controller().onWidgetStateChangedListener(this);
         cropCircleTransformation = new CropCircleTransformation(this);
@@ -174,7 +174,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
         }
         audioWidget.controller().start();
-        audioWidget.controller().duration((int) items.get(playingIndex).duration());
+        audioWidget.controller().position(0);
+        audioWidget.controller().duration(mediaPlayer.getDuration());
         stopTrackingPosition();
         startTrackingPosition();
         Glide.with(this)

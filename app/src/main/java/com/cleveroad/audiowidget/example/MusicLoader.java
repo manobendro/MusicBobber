@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by Александр on 02.03.2016.
+ * Loader for list of tracks.
  */
 class MusicLoader extends BaseAsyncTaskLoader<Collection<MusicItem>> {
 
