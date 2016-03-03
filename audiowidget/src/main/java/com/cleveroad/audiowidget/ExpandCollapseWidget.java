@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Interpolator;
 
 import java.util.Random;
 
@@ -80,6 +81,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private final ValueAnimator collapseAnimator;
 	private final Drawable defaultAlbumCover;
     private final int buttonPadding;
+    private final Interpolator accDecInterpolator;
 
 	private float bubblesTime;
 	private boolean expanded;
@@ -94,6 +96,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		super(configuration.context());
 		setLayerType(LAYER_TYPE_SOFTWARE, null);
 		this.playbackState = configuration.playbackState();
+        this.accDecInterpolator = configuration.accDecInterpolator();
 		this.random = configuration.random();
 		this.bubblesPaint = new Paint();
 		this.bubblesPaint.setStyle(Paint.Style.FILL);
@@ -250,6 +253,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 		if (DrawableUtils.isBetween(position, 0, EXPAND_SIZE_END_F)) {
 			float time = DrawableUtils.normalize(position, 0, EXPAND_SIZE_END_F);
+            time = accDecInterpolator.getInterpolation(time);
 			float l, r, t, b;
 			float height = radius * 2;
 			t = radius;
@@ -290,6 +294,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 		if (DrawableUtils.isBetween(position, EXPAND_POSITION_START_F, EXPAND_POSITION_END_F)) {
 			float time = DrawableUtils.normalize(position, EXPAND_POSITION_START_F, EXPAND_POSITION_END_F);
+            time = accDecInterpolator.getInterpolation(time);
 			Rect playBounds = buttonBounds[INDEX_PLAY];
 			calculateBounds(INDEX_PLAY, playBounds);
 			int l, t, r, b;
@@ -362,6 +367,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 		if (DrawableUtils.isBetween(position, COLLAPSE_POSITION_START_F, COLLAPSE_POSITION_END_F)) {
 			float time = DrawableUtils.normalize(position, COLLAPSE_POSITION_START_F, COLLAPSE_POSITION_END_F);
+            time = accDecInterpolator.getInterpolation(time);
 			Rect playBounds = buttonBounds[INDEX_PLAY];
 			calculateBounds(INDEX_PLAY, playBounds);
 			int l, t, r, b;
@@ -380,6 +386,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 		if (DrawableUtils.isBetween(position, COLLAPSE_SIZE_START_F, COLLAPSE_SIZE_END_F)) {
 			float time = DrawableUtils.normalize(position, COLLAPSE_SIZE_START_F, COLLAPSE_SIZE_END_F);
+            time = accDecInterpolator.getInterpolation(time);
 			paint.setColor(colorChanger.nextColor(time));
 			float l, r, t, b;
 			float height = radius * 2;

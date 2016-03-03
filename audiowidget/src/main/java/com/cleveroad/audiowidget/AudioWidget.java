@@ -18,6 +18,8 @@ import android.support.annotation.Nullable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 import java.util.Random;
 
@@ -159,6 +161,7 @@ public class AudioWidget {
                 .context(context)
                 .playbackState(playbackState)
                 .random(new Random())
+                .accDecInterpolator(new AccelerateDecelerateInterpolator())
                 .darkColor(darkColor)
                 .playColor(lightColor)
                 .progressColor(progressColor)
@@ -595,6 +598,8 @@ public class AudioWidget {
         private boolean shadowDySet;
         private boolean bubblesMinSizeSet;
         private boolean bubblesMaxSizeSet;
+        private Interpolator accDecInterpolator;
+        public boolean accDecInterpolatorSet;
 
         public Builder(@NonNull Context context) {
             this.context = context;

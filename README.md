@@ -1,6 +1,7 @@
 # Audio Widget Overlay View #
 
 ![Demo image](https://trello-attachments.s3.amazonaws.com/56c1a2d7384163114caddfe6/800x600/758bbb56f5c0ad476a06b581fbf4d419/Untitled-2.gif)
+![Demo image](/images/demo.gif)
 
 To use Audio Widget Overlay first add dependency to your project:
  

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
+import android.view.animation.Interpolator;
 
 import java.util.Random;
 
@@ -46,6 +47,7 @@ class Configuration {
     private final float bubblesMaxSize;
     private final int crossColor;
     private final int crossOverlappedColor;
+    private final Interpolator accDecInterpolator;
 
 	private Configuration(Builder builder) {
 		this.context = builder.context;
@@ -74,6 +76,7 @@ class Configuration {
         this.bubblesMaxSize = builder.bubblesMaxSize;
         this.crossColor = builder.crossColor;
         this.crossOverlappedColor = builder.crossOverlappedColor;
+        this.accDecInterpolator = builder.accDecInterpolator;
 	}
 
 	public Context context() {
@@ -184,6 +187,10 @@ class Configuration {
         return crossOverlappedColor;
     }
 
+    public Interpolator accDecInterpolator() {
+        return accDecInterpolator;
+    }
+
     public static final class Builder {
 
 		private int lightColor;
@@ -212,6 +219,7 @@ class Configuration {
         private float bubblesMaxSize;
         private int crossColor;
         private int crossOverlappedColor;
+        private Interpolator accDecInterpolator;
 
 		public Builder context(Context context) {
 			this.context = context;
@@ -340,6 +348,11 @@ class Configuration {
 
         public Builder crossOverlappedColor(@ColorInt int crossOverlappedColor) {
             this.crossOverlappedColor = crossOverlappedColor;
+            return this;
+        }
+
+        public Builder accDecInterpolator(Interpolator accDecInterpolator) {
+            this.accDecInterpolator = accDecInterpolator;
             return this;
         }
 
