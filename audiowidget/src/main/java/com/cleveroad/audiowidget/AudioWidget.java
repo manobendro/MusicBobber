@@ -16,6 +16,8 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.Gravity;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -94,7 +96,7 @@ public class AudioWidget {
             screenSize.x = windowManager.getDefaultDisplay().getWidth();
             screenSize.y = windowManager.getDefaultDisplay().getHeight();
         }
-        screenSize.y -= context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
+        screenSize.y -= statusBarHeight() + navigationBarHeight();
 
         Configuration configuration = prepareConfiguration(builder);
         playPauseButton = new PlayPauseButton(configuration);
@@ -190,6 +192,32 @@ public class AudioWidget {
                 .build();
     }
 
+    private int statusBarHeight() {
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
+    }
+
+    public int navigationBarHeight() {
+        if (hasNavigationBar()) {
+            int resourceId = context.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                return context.getResources().getDimensionPixelSize(resourceId);
+            }
+            return context.getResources().getDimensionPixelSize(R.dimen.aw_navigation_bar_height);
+        }
+        return 0;
+    }
+
+    private boolean hasNavigationBar() {
+        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+        boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
+        int id = context.getResources().getIdentifier("config_showNavigationBar", "bool", "android");
+        return !hasBackKey && !hasHomeKey || id > 0 && context.getResources().getBoolean(id);
+    }
+
     /**
      * Create new controller.
      *
@@ -271,8 +299,8 @@ public class AudioWidget {
         }
         shown = true;
         float remWidX = screenSize.x / 2 - radius;
-        hiddenRemWidY = screenSize.y + radius;
-        visibleRemWidY = screenSize.y - height - radius;
+        hiddenRemWidY = screenSize.y + height + navigationBarHeight();
+        visibleRemWidY = screenSize.y - radius - (hasNavigationBar() ? 0 : height);
         show(removeWidgetView, (int) remWidX, (int) hiddenRemWidY);
         show(playPauseButton, (int) (cx - height), (int) (cy - height));
     }

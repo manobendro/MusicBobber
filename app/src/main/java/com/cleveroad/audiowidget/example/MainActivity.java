@@ -155,6 +155,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         .show();
                 return;
             }
+            ActivityCompat.requestPermissions(MainActivity.this, new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, EXT_STORAGE_PERMISSION_REQ_CODE);
             return;
         }
         loadMusic();

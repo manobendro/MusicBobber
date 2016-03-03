@@ -19,7 +19,7 @@ import java.util.Random;
 class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
 
 	private static final float BUBBLES_ANGLE_STEP = 18.0f;
-	private static final float ANIMATION_TIME_F = 12 * Configuration.FRAME_SPEED;
+	private static final float ANIMATION_TIME_F = 8 * Configuration.FRAME_SPEED;
 	private static final long ANIMATION_TIME_L = (long) ANIMATION_TIME_F;
 	private static final float COLOR_ANIMATION_TIME_F = ANIMATION_TIME_F / 4f;
 	private static final float COLOR_ANIMATION_TIME_START_F = (ANIMATION_TIME_F - COLOR_ANIMATION_TIME_F) / 2;
