@@ -80,6 +80,7 @@ class TouchManager implements View.OnTouchListener {
 						longClickPerformed = true;
 						if (callback != null) {
 							callback.onLongClick(prevX, prevY);
+                            callback.onReleased(prevX, prevY);
 						}
 					}
 				}, longClickThreshold);

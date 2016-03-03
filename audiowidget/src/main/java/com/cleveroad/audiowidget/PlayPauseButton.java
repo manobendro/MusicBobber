@@ -25,7 +25,8 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private static final float COLOR_ANIMATION_TIME_START_F = (ANIMATION_TIME_F - COLOR_ANIMATION_TIME_F) / 2;
 	private static final float COLOR_ANIMATION_TIME_END_F = COLOR_ANIMATION_TIME_START_F + COLOR_ANIMATION_TIME_F;
 	private static final int TOTAL_BUBBLES_COUNT = (int) (360 / BUBBLES_ANGLE_STEP);
-	static final long PROGRESS_CHANGES_DURATION = (long) (8 * Configuration.FRAME_SPEED);
+	static final long PROGRESS_CHANGES_DURATION = (long) (6 * Configuration.FRAME_SPEED);
+    private static final long PROGRESS_STEP_DURATION = (long) (3 * Configuration.FRAME_SPEED);
 
     private final Paint buttonPaint;
 	private final Paint bubblesPaint;
@@ -54,7 +55,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private float randomStartAngle;
 	private float buttonSize = 1.0f;
 	private float progress = 0.0f;
-	private float animatedProgress = progress;
+	private float animatedProgress = 0;
 	private boolean progressChangesEnabled;
 
     public PlayPauseButton(@NonNull Configuration configuration) {
@@ -235,7 +236,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		canvas.drawCircle(cx, cy, radius, buttonPaint);
 		float padding = progressPaint.getStrokeWidth() / 2f;
 		bounds.set(cx - radius + padding, cy - radius + padding, cx + radius - padding, cy + radius - padding);
-		canvas.drawArc(bounds, -90, animatedProgress * 360, false, progressPaint);
+		canvas.drawArc(bounds, -90, animatedProgress, false, progressPaint);
 
 		int l = (int) (cx - radius + buttonPadding);
 		int t = (int) (cy - radius + buttonPadding);
@@ -269,9 +270,19 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 
 	@Override
 	public void onProgressChanged(int position, int duration, float percentage) {
-		this.progress = percentage;
-		this.animatedProgress = percentage;
-		postInvalidate();
+		if (percentage > progress) {
+            float old = progress;
+            post(() -> {
+                if (animateProgressChanges(old * 360, percentage * 360, PROGRESS_STEP_DURATION)) {
+                    progress = percentage;
+                }
+            });
+        } else {
+            this.progress = percentage;
+            this.animatedProgress = percentage * 360;
+            postInvalidate();
+        }
+
 	}
 
 	public void enableProgressChanges(boolean enable) {
@@ -279,19 +290,27 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 			return;
 		progressChangesEnabled = enable;
 		if (progressChangesEnabled) {
-			animateProgressChanges(0, progress);
+			animateProgressChangesForce(0, progress * 360, PROGRESS_CHANGES_DURATION);
 		} else {
-			animateProgressChanges(progress, 0);
+			animateProgressChangesForce(progress * 360, 0, PROGRESS_CHANGES_DURATION);
 		}
 	}
 
-	private void animateProgressChanges(float oldValue, float newValue) {
+	private void animateProgressChangesForce(float oldValue, float newValue, long duration) {
+        if (progressAnimator.isRunning()) {
+            progressAnimator.cancel();
+        }
+        animateProgressChanges(oldValue, newValue, duration);
+    }
+
+	private boolean animateProgressChanges(float oldValue, float newValue, long duration) {
 		if (progressAnimator.isRunning()) {
-			progressAnimator.cancel();
+			return false;
 		}
 		progressAnimator.setFloatValues(oldValue, newValue);
-		progressAnimator.setDuration(PROGRESS_CHANGES_DURATION);
+		progressAnimator.setDuration(duration);
 		progressAnimator.start();
+        return true;
 	}
 
 	@Override
