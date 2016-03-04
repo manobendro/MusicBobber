@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
+import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
 import java.util.Random;
@@ -15,8 +16,7 @@ class Configuration {
 
 	public static final float FRAME_SPEED = 70.0f;
 
-    public static final long CLICK_THRESHOLD = 200;
-	public static final long LONG_CLICK_THRESHOLD = 400;
+	public static final long LONG_CLICK_THRESHOLD = ViewConfiguration.getLongPressTimeout() + 128;
     public static final int STATE_STOPPED = 0;
     public static final int STATE_PLAYING = 1;
     public static final int STATE_PAUSED = 2;

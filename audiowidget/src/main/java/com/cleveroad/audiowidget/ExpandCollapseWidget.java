@@ -20,7 +20,7 @@ import java.util.Random;
  * Expanded state view.
  */
 @SuppressLint("ViewConstructor")
-class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
+class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
 
 	static final int DIRECTION_LEFT = 1;
 	static final int DIRECTION_RIGHT = 2;
@@ -363,7 +363,9 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
 			float time = DrawableUtils.normalize(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F);
 			bubblesPaint.setAlpha((int) DrawableUtils.customFunction(time, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
-		}
+		} else {
+            bubblesPaint.setAlpha(0);
+        }
         if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
 			bubblesTime = DrawableUtils.normalize(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F);
 		}
@@ -623,33 +625,6 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		invalidate(bounds.left, bounds.top, bounds.right, bounds.bottom);
 	}
 
-    @Override
-    public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
-        float bLeft = left;
-        float bTop = top + radius;
-        float size = radius * 2;
-        float bRight = bLeft + widgetWidth;
-        float bBottom = bTop + widgetHeight;
-
-        if (bRight < size + padding) {
-            bRight = size + padding;
-            bLeft = bRight - widgetWidth;
-        }
-        if (bLeft > screenWidth - size - padding) {
-            bLeft = screenWidth - size - padding;
-        }
-        if (bTop < 0) {
-            bTop = 0;
-        }
-
-        if (bBottom > screenHeight) {
-            bBottom = screenHeight;
-            bTop = bBottom - size - padding;
-        }
-        outBounds[0] = bLeft;
-        outBounds[1] = bTop - radius;
-    }
-
     public void onTouched(float x, float y) {
         int index = getTouchedAreaIndex((int) x, (int) y);
         if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
@@ -663,6 +638,62 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
             touchedButtonIndex = index;
             touchUpAnimator.start();
+        }
+    }
+
+    public TouchManager.BoundsChecker newBounceChecker() {
+        return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight);
+    }
+
+    private static final class BoundsCheckerImpl implements TouchManager.BoundsChecker {
+
+        private float radius;
+        private float padding;
+        private float widgetWidth;
+        private float widgetHeight;
+
+        public BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight) {
+            this.radius = radius;
+            this.padding = padding;
+            this.widgetWidth = widgetWidth;
+            this.widgetHeight = widgetHeight;
+        }
+
+        @Override
+        public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
+            float bLeft = left;
+            float bTop = top + radius;
+            float size = radius * 2;
+            float bRight = bLeft + widgetWidth;
+            float bBottom = bTop + widgetHeight;
+
+            if (bRight < size + padding) {
+                bRight = size + padding;
+                bLeft = bRight - widgetWidth;
+            }
+            if (bLeft > screenWidth - size - padding) {
+                bLeft = screenWidth - size - padding;
+            }
+            if (bTop < 0) {
+                bTop = 0;
+            }
+
+            if (bBottom > screenHeight) {
+                bBottom = screenHeight;
+                bTop = bBottom - size - padding;
+            }
+            outBounds[0] = bLeft;
+            outBounds[1] = bTop - radius;
+        }
+
+        @Override
+        public float stickyLeftSide(float screenWidth) {
+            return 0;
+        }
+
+        @Override
+        public float stickyRightSide(float screenWidth) {
+            return screenWidth - widgetWidth;
         }
     }
 }

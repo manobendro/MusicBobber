@@ -16,7 +16,7 @@ import java.util.Random;
  * Collapsed state view.
  */
 @SuppressLint("ViewConstructor")
-class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener, TouchManager.BoundsChecker {
+class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener {
 
 	private static final float BUBBLES_ANGLE_STEP = 18.0f;
 	private static final float ANIMATION_TIME_F = 8 * Configuration.FRAME_SPEED;
@@ -313,28 +313,51 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
         return true;
 	}
 
-	@Override
-	public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
-		float bLeft = left + radius;
-		float bTop = top + radius;
-		if (bLeft < 0) {
-			bLeft = 0;
-		}
-		if (bTop < 0) {
-			bTop = 0;
-		}
-		float size = radius * 2;
-		float bRight = bLeft + size;
-		float bBottom = bTop + size;
-		if (bRight > screenWidth) {
-			bRight = screenWidth;
-			bLeft = bRight - size;
-		}
-		if (bBottom > screenHeight) {
-			bBottom = screenHeight;
-			bTop = bBottom - size;
-		}
-		outBounds[0] = bLeft - radius;
-		outBounds[1] = bTop - radius;
-	}
+    public TouchManager.BoundsChecker newBoundsChecker() {
+        return new BoundsCheckerImpl(radius);
+    }
+
+	private static final class BoundsCheckerImpl implements TouchManager.BoundsChecker {
+
+        private float radius;
+
+        public BoundsCheckerImpl(float radius) {
+            this.radius = radius;
+        }
+
+        @Override
+        public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
+            float bLeft = left + radius;
+            float bTop = top + radius;
+            if (bLeft < 0) {
+                bLeft = 0;
+            }
+            if (bTop < 0) {
+                bTop = 0;
+            }
+            float size = radius * 2;
+            float bRight = bLeft + size;
+            float bBottom = bTop + size;
+            if (bRight > screenWidth) {
+                bRight = screenWidth;
+                bLeft = bRight - size;
+            }
+            if (bBottom > screenHeight) {
+                bBottom = screenHeight;
+                bTop = bBottom - size;
+            }
+            outBounds[0] = bLeft - radius;
+            outBounds[1] = bTop - radius;
+        }
+
+        @Override
+        public float stickyLeftSide(float screenWidth) {
+            return -radius;
+        }
+
+        @Override
+        public float stickyRightSide(float screenWidth) {
+            return screenWidth - radius * 3;
+        }
+    }
 }
