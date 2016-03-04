@@ -91,8 +91,8 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.bubbleSpeeds = new float[TOTAL_BUBBLES_COUNT];
 		this.bubbleSpeedCoefficients = new float[TOTAL_BUBBLES_COUNT];
 		this.colorChanger = new ColorChanger();
-		this.playDrawable = configuration.playDrawable().getConstantState().newDrawable();
-		this.pauseDrawable = configuration.pauseDrawable().getConstantState().newDrawable();
+		this.playDrawable = configuration.playDrawable().getConstantState().newDrawable().mutate();
+		this.pauseDrawable = configuration.pauseDrawable().getConstantState().newDrawable().mutate();
 		this.pauseDrawable.setAlpha(0);
 		this.playbackState.addPlaybackStateListener(this);
 		final ValueAnimator.AnimatorUpdateListener listener = animation -> {

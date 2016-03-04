@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -130,12 +129,12 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.buttonBounds = new Rect[5];
 		this.drawables = new Drawable[6];
 		this.bounds = new RectF();
-		this.drawables[INDEX_PLAYLIST] = configuration.playlistDrawable().getConstantState().newDrawable();
-		this.drawables[INDEX_PREV] = configuration.prevDrawable().getConstantState().newDrawable();
-		this.drawables[INDEX_PLAY] = configuration.playDrawable().getConstantState().newDrawable();
-		this.drawables[INDEX_PAUSE] = configuration.pauseDrawable().getConstantState().newDrawable();
-		this.drawables[INDEX_NEXT] = configuration.nextDrawable().getConstantState().newDrawable();
-		this.drawables[INDEX_ALBUM] = defaultAlbumCover = configuration.albumDrawable().getConstantState().newDrawable();
+		this.drawables[INDEX_PLAYLIST] = configuration.playlistDrawable().getConstantState().newDrawable().mutate();
+		this.drawables[INDEX_PREV] = configuration.prevDrawable().getConstantState().newDrawable().mutate();
+		this.drawables[INDEX_PLAY] = configuration.playDrawable().getConstantState().newDrawable().mutate();
+		this.drawables[INDEX_PAUSE] = configuration.pauseDrawable().getConstantState().newDrawable().mutate();
+		this.drawables[INDEX_NEXT] = configuration.nextDrawable().getConstantState().newDrawable().mutate();
+		this.drawables[INDEX_ALBUM] = defaultAlbumCover = configuration.albumDrawable().getConstantState().newDrawable().mutate();
 		this.sizeStep = widgetWidth / 5f;
 		this.widgetHeight = radius * 2;
 		for (int i = 0; i < buttonBounds.length; i++) {
@@ -285,10 +284,6 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 					drawable = drawables[INDEX_PAUSE];
 				} else {
 					drawable = drawables[INDEX_PLAY];
-				}
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && drawable.getAlpha() == 0) {
-					Log.w("TEST", "wrong alpha value");
-					drawable.setAlpha(255);
 				}
 			} else {
 				drawable = drawables[i];
@@ -620,7 +615,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			drawables[INDEX_ALBUM] = defaultAlbumCover;
 		} else {
 			if (albumCover.getConstantState() != null)
-				drawables[INDEX_ALBUM] = albumCover.getConstantState().newDrawable();
+				drawables[INDEX_ALBUM] = albumCover.getConstantState().newDrawable().mutate();
 			else
 				drawables[INDEX_ALBUM] = albumCover;
 		}

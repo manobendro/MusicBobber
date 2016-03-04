@@ -278,7 +278,7 @@ public class AudioWidget {
             }
 
             @Override
-            public void albumCover(@Nullable Bitmap bitmap) {
+            public void albumCoverBitmap(@Nullable Bitmap bitmap) {
                 if (bitmap == null)
                     expandCollapseWidget.albumCover(null);
                 else
@@ -977,7 +977,7 @@ public class AudioWidget {
          *
          * @param albumCover album cover or null to set default one
          */
-        void albumCover(@Nullable Bitmap albumCover);
+        void albumCoverBitmap(@Nullable Bitmap albumCover);
     }
 
     /**

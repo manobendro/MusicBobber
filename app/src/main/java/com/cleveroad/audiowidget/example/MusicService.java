@@ -182,12 +182,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         Glide.with(this)
                 .load(items.get(playingIndex).albumArtUri())
                 .asBitmap()
+                .override(100, 100) // TODO: 04.03.2016 dp to px
+                .centerCrop()
                 .transform(cropCircleTransformation)
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
                         if (audioWidget != null) {
-                            audioWidget.controller().albumCover(resource);
+                            audioWidget.controller().albumCoverBitmap(resource);
                         }
                     }
 
@@ -195,7 +197,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                     public void onLoadFailed(Exception e, Drawable errorDrawable) {
                         super.onLoadFailed(e, errorDrawable);
                         if (audioWidget != null) {
-                            audioWidget.controller().albumCover((Drawable)null);
+                            audioWidget.controller().albumCover(null);
                         }
                     }
                 });
