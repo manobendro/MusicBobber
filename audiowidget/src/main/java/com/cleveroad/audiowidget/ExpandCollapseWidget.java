@@ -660,33 +660,6 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         }
 
         @Override
-        public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
-            float bLeft = left;
-            float bTop = top + radius;
-            float size = radius * 2;
-            float bRight = bLeft + widgetWidth;
-            float bBottom = bTop + widgetHeight;
-
-            if (bRight < size + padding) {
-                bRight = size + padding;
-                bLeft = bRight - widgetWidth;
-            }
-            if (bLeft > screenWidth - size - padding) {
-                bLeft = screenWidth - size - padding;
-            }
-            if (bTop < 0) {
-                bTop = 0;
-            }
-
-            if (bBottom > screenHeight) {
-                bBottom = screenHeight;
-                bTop = bBottom - size - padding;
-            }
-            outBounds[0] = bLeft;
-            outBounds[1] = bTop - radius;
-        }
-
-        @Override
         public float stickyLeftSide(float screenWidth) {
             return 0;
         }
@@ -694,6 +667,16 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         @Override
         public float stickyRightSide(float screenWidth) {
             return screenWidth - widgetWidth;
+        }
+
+        @Override
+        public float stickyBottomSide(float screenHeight) {
+            return screenHeight - 3 * radius;
+        }
+
+        @Override
+        public float stickyTopSide(float screenHeight) {
+            return -radius;
         }
     }
 }

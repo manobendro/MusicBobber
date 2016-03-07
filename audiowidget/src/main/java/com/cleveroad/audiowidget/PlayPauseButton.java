@@ -326,31 +326,6 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
         }
 
         @Override
-        public void checkBounds(float left, float top, float right, float bottom, float screenWidth, float screenHeight, float[] outBounds) {
-            float bLeft = left + radius;
-            float bTop = top + radius;
-            if (bLeft < 0) {
-                bLeft = 0;
-            }
-            if (bTop < 0) {
-                bTop = 0;
-            }
-            float size = radius * 2;
-            float bRight = bLeft + size;
-            float bBottom = bTop + size;
-            if (bRight > screenWidth) {
-                bRight = screenWidth;
-                bLeft = bRight - size;
-            }
-            if (bBottom > screenHeight) {
-                bBottom = screenHeight;
-                bTop = bBottom - size;
-            }
-            outBounds[0] = bLeft - radius;
-            outBounds[1] = bTop - radius;
-        }
-
-        @Override
         public float stickyLeftSide(float screenWidth) {
             return -radius;
         }
@@ -358,6 +333,16 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
         @Override
         public float stickyRightSide(float screenWidth) {
             return screenWidth - radius * 3;
+        }
+
+        @Override
+        public float stickyBottomSide(float screenHeight) {
+            return screenHeight - radius * 3;
+        }
+
+        @Override
+        public float stickyTopSide(float screenHeight) {
+            return -radius;
         }
     }
 }

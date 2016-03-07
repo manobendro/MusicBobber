@@ -77,7 +77,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        audioWidget = new AudioWidget.Builder(this).build();
+        audioWidget = new AudioWidget.Builder(this)
+                .edgeOffsetX(-30)
+                .edgeOffsetY(-30)
+                .build();
         audioWidget.controller().onControlsClickListener(this);
         audioWidget.controller().onWidgetStateChangedListener(this);
         cropCircleTransformation = new CropCircleTransformation(this);

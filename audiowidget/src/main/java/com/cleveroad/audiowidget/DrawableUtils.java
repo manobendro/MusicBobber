@@ -123,4 +123,15 @@ class DrawableUtils {
 		return endValue + (startValue - endValue) * (1 - time);
 	}
 
+    /**
+     * Exponential smoothing (Holt - Winters).
+     * @param prevValue previous values in series <code>X[i-1]</code>
+     * @param newValue new value in series <code>X[i]</code>
+     * @param a smooth coefficient
+     * @return smoothed value
+     */
+    public static float smooth(float prevValue, float newValue, float a) {
+        return a * newValue + (1 - a) * prevValue;
+    }
+
 }

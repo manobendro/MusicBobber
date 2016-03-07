@@ -21,7 +21,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Interpolator;
 
 import java.util.Random;
 
@@ -102,11 +101,10 @@ public class AudioWidget {
         playPauseButton = new PlayPauseButton(configuration);
         expandCollapseWidget = new ExpandCollapseWidget(configuration);
         removeWidgetView = new RemoveWidgetView(configuration);
-        float smt = context.getResources().getDimensionPixelSize(R.dimen.aw_significant_movement_threshold);
-        TouchManager playPauseButtonManager = TouchManager.create(playPauseButton, playPauseButton.newBoundsChecker()
-        );
-        TouchManager expandedWidgetManager = TouchManager.create(expandCollapseWidget, expandCollapseWidget.newBounceChecker()
-        );
+        TouchManager playPauseButtonManager = TouchManager.create(playPauseButton, playPauseButton.newBoundsChecker(),
+                builder.edgeOffsetX, builder.edgeOffsetY);
+        TouchManager expandedWidgetManager = TouchManager.create(expandCollapseWidget, expandCollapseWidget.newBounceChecker(),
+                builder.edgeOffsetX, builder.edgeOffsetY);
 
         playPauseButtonManager.callback(new PlayPauseButtonCallback());
         expandedWidgetManager.callback(new ExpandCollapseWidgetCallback());
@@ -114,7 +112,7 @@ public class AudioWidget {
             @Override
             public void onWidgetStateChanged(@NonNull State state) {
                 if (state == State.COLLAPSED) {
-                    playPauseButton.setVisibility(View.VISIBLE);
+                    playPauseButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
                     windowManager.removeView(expandCollapseWidget);
                     playPauseButton.enableProgressChanges(true);
                 }
@@ -410,7 +408,7 @@ public class AudioWidget {
                 x += widgetHeight / 2f;
             }
             show(expandCollapseWidget, x, y);
-            playPauseButton.setVisibility(View.INVISIBLE);
+            playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
             expandCollapseWidget.expand(expandDirection);
         }
 
@@ -633,8 +631,8 @@ public class AudioWidget {
         private boolean shadowDySet;
         private boolean bubblesMinSizeSet;
         private boolean bubblesMaxSizeSet;
-        private Interpolator accDecInterpolator;
-        public boolean accDecInterpolatorSet;
+        private int edgeOffsetX;
+        private int edgeOffsetY;
 
         public Builder(@NonNull Context context) {
             this.context = context;
@@ -844,6 +842,24 @@ public class AudioWidget {
          */
         public Builder pauseDrawable(@NonNull Drawable pauseDrawable) {
             this.pauseDrawable = pauseDrawable;
+            return this;
+        }
+
+        /**
+         * Set widget edge offset on X axis
+         * @param edgeOffsetX widget edge offset on X axis
+         */
+        public Builder edgeOffsetX(int edgeOffsetX) {
+            this.edgeOffsetX = edgeOffsetX;
+            return this;
+        }
+
+        /**
+         * Set widget edge offset on Y axis
+         * @param edgeOffsetY widget edge offset on Y axis
+         */
+        public Builder edgeOffsetY(int edgeOffsetY) {
+            this.edgeOffsetY = edgeOffsetY;
             return this;
         }
 
