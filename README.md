@@ -61,8 +61,9 @@ Then you can use audio widget's controller to listen for events:
 // media buttons' click listener
 audioWidget.controller().onControlsClickListener(new AudioWidget.OnControlsClickListener() {
     @Override
-    public void onPlaylistClicked() {
+    public boolean onPlaylistClicked() {
         // playlist icon clicked
+        // return true to collapse widget, false to stay in expanded state
     }
 
     @Override
