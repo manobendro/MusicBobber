@@ -11,6 +11,9 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
+import android.view.animation.OvershootInterpolator;
 
 /**
  * Touch detector for views.
@@ -20,39 +23,56 @@ class TouchManager implements View.OnTouchListener {
     private final View view;
     private final BoundsChecker boundsChecker;
     private final WindowManager windowManager;
-    private final int rootWidth;
-    private final int rootHeight;
-    private final int edgeOffsetX;
-    private final int edgeOffsetY;
     private final StickyEdgeAnimator stickyEdgeAnimator;
     private final VelocityAnimator velocityAnimator;
 
     private GestureListener gestureListener;
     private GestureDetector gestureDetector;
     private Callback callback;
+    private int screenWidth;
+    private int screenHeight;
+    private int edgeOffsetX;
+    private int edgeOffsetY;
+    private Float lastRawX, lastRawY;
 
-    private TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker, int edgeOffsetX, int edgeOffsetY) {
+    public TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
         this.gestureDetector = new GestureDetector(view.getContext(), gestureListener = new GestureListener());
         gestureDetector.setIsLongpressEnabled(true);
         this.view = view;
         this.boundsChecker = boundsChecker;
         this.view.setOnTouchListener(this);
-        this.edgeOffsetX = edgeOffsetX;
-        this.edgeOffsetY = edgeOffsetY;
         Context context = view.getContext().getApplicationContext();
         this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        this.rootWidth = context.getResources().getDisplayMetrics().widthPixels;
-        this.rootHeight = context.getResources().getDisplayMetrics().heightPixels - context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
+        this.screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+        this.screenHeight = context.getResources().getDisplayMetrics().heightPixels - context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
         stickyEdgeAnimator = new StickyEdgeAnimator();
         velocityAnimator = new VelocityAnimator();
+    }
+
+    public TouchManager screenWidth(int screenWidth) {
+        this.screenWidth = screenWidth;
+        return this;
+    }
+
+    public TouchManager screenHeight(int screenHeight) {
+        this.screenHeight = screenHeight;
+        return this;
+    }
+
+    public TouchManager edgeOffsetX(int edgeOffsetX) {
+        this.edgeOffsetX = edgeOffsetX;
+        return this;
+    }
+
+    public TouchManager edgeOffsetY(int edgeOffsetY) {
+        this.edgeOffsetY = edgeOffsetY;
+        return this;
     }
 
     public TouchManager callback(Callback callback) {
         this.callback = callback;
         return this;
     }
-
-    private Float lastRawX, lastRawY;
 
     @Override
     public boolean onTouch(@NonNull View v, @NonNull MotionEvent event) {
@@ -67,22 +87,55 @@ class TouchManager implements View.OnTouchListener {
         return res;
     }
 
-    public static TouchManager create(@NonNull View view, @NonNull BoundsChecker boundsChecker, int edgeOffsetX, int edgeOffsetY) {
-        return new TouchManager(view, boundsChecker, edgeOffsetX, edgeOffsetY);
-    }
-
+    /**
+     * Touch manager callback.
+     */
     interface Callback {
+
+        /**
+         * Called when user clicks on view.
+         * @param x click x coordinate
+         * @param y click y coordinate
+         */
         void onClick(float x, float y);
 
+        /**
+         * Called when user long clicks on view.
+         * @param x click x coordinate
+         * @param y click y coordinate
+         */
         void onLongClick(float x, float y);
 
+        /**
+         * Called when user touches screen outside view's bounds.
+         */
         void onTouchOutside();
 
+        /**
+         * Called when user touches widget but not removed finger from it.
+         * @param x x coordinate
+         * @param y y coordinate
+         */
         void onTouched(float x, float y);
 
+        /**
+         * Called when user drags widget.
+         * @param diffX movement by X axis
+         * @param diffY movement by Y axis
+         */
         void onMoved(float diffX, float diffY);
 
+        /**
+         * Called when user releases finger from widget.
+         * @param x x coordinate
+         * @param y y coordinate
+         */
         void onReleased(float x, float y);
+
+        /**
+         * Called when sticky edge animation completed.
+         */
+        void onAnimationCompleted();
     }
 
     public static class SimpleCallback implements Callback {
@@ -117,19 +170,50 @@ class TouchManager implements View.OnTouchListener {
 
         }
 
+        @Override
+        public void onAnimationCompleted() {
+
+        }
+
     }
 
+    /**
+     * Interface that return sticky bounds for widget.
+     */
     interface BoundsChecker {
 
+        /**
+         * Get sticky left position.
+         * @param screenWidth screen width
+         * @return sticky left position
+         */
         float stickyLeftSide(float screenWidth);
 
+        /**
+         * Get sticky right position.
+         * @param screenWidth screen width
+         * @return sticky right position
+         */
         float stickyRightSide(float screenWidth);
 
+        /**
+         * Get sticky top position.
+         * @param screenHeight screen height
+         * @return sticky top position
+         */
         float stickyTopSide(float screenHeight);
 
+        /**
+         * Get sticky bottom position.
+         * @param screenHeight screen height
+         * @return sticky bottom position
+         */
         float stickyBottomSide(float screenHeight);
     }
 
+    /**
+     * View's gesture listener.
+     */
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
         private int prevX, prevY;
@@ -222,20 +306,26 @@ class TouchManager implements View.OnTouchListener {
         }
     }
 
+    /**
+     * Helper class for animating fling gesture.
+     */
     private class VelocityAnimator {
         private final ValueAnimator velocityAnimator;
         private final PropertyValuesHolder dxHolder;
         private final PropertyValuesHolder dyHolder;
+        private final Interpolator interpolator;
         private WindowManager.LayoutParams params;
         private long prevPlayTime;
 
         public VelocityAnimator() {
+            interpolator = new DecelerateInterpolator();
             dxHolder = PropertyValuesHolder.ofFloat("dx", 0, 0);
             dyHolder = PropertyValuesHolder.ofFloat("dy", 0, 0);
             dxHolder.setEvaluator(new FloatEvaluator());
             dyHolder.setEvaluator(new FloatEvaluator());
             velocityAnimator = ValueAnimator.ofPropertyValuesHolder(dxHolder, dyHolder);
-            velocityAnimator.setDuration(500);
+            velocityAnimator.setInterpolator(interpolator);
+            velocityAnimator.setDuration(400);
             velocityAnimator.addUpdateListener(animation -> {
                 long curPlayTime = animation.getCurrentPlayTime();
                 long dt = curPlayTime - prevPlayTime;
@@ -281,19 +371,25 @@ class TouchManager implements View.OnTouchListener {
         }
     }
 
+    /**
+     * Helper class for animating sticking to screen edge.
+     */
     private class StickyEdgeAnimator {
         private final PropertyValuesHolder dxHolder;
         private final PropertyValuesHolder dyHolder;
         private final ValueAnimator edgeAnimator;
+        private final Interpolator interpolator;
         private WindowManager.LayoutParams params;
 
         public StickyEdgeAnimator() {
+            interpolator = new OvershootInterpolator();
             dxHolder = PropertyValuesHolder.ofInt("x", 0, 0);
             dyHolder = PropertyValuesHolder.ofInt("y", 0, 0);
             dxHolder.setEvaluator(new IntEvaluator());
             dyHolder.setEvaluator(new IntEvaluator());
             edgeAnimator = ValueAnimator.ofPropertyValuesHolder(dxHolder, dyHolder);
-            edgeAnimator.setDuration(200);
+            edgeAnimator.setInterpolator(interpolator);
+            edgeAnimator.setDuration(400);
             edgeAnimator.addUpdateListener(animation -> {
                 int x = (int) animation.getAnimatedValue("x");
                 int y = (int) animation.getAnimatedValue("y");
@@ -304,6 +400,15 @@ class TouchManager implements View.OnTouchListener {
                 params.y = y;
                 windowManager.updateViewLayout(view, params);
             });
+            edgeAnimator.addListener(new SimpleAnimatorListener() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    if (callback != null) {
+                        callback.onAnimationCompleted();
+                    }
+                }
+            });
         }
 
         public void animate() {
@@ -311,16 +416,16 @@ class TouchManager implements View.OnTouchListener {
             float cx = params.x + view.getWidth() / 2f;
             float cy = params.y + view.getWidth() / 2f;
             int x;
-            if (cx < rootWidth / 2f) {
-                x = (int) boundsChecker.stickyLeftSide(rootWidth) + edgeOffsetX;
+            if (cx < screenWidth / 2f) {
+                x = (int) boundsChecker.stickyLeftSide(screenWidth) + edgeOffsetX;
             } else {
-                x = (int) boundsChecker.stickyRightSide(rootWidth) - edgeOffsetX;
+                x = (int) boundsChecker.stickyRightSide(screenWidth) - edgeOffsetX;
             }
             int y = params.y;
-            int top = (int) boundsChecker.stickyTopSide(rootHeight) + edgeOffsetY;
-            int bottom = (int) boundsChecker.stickyBottomSide(rootHeight) - edgeOffsetY;
+            int top = (int) boundsChecker.stickyTopSide(screenHeight) + edgeOffsetY;
+            int bottom = (int) boundsChecker.stickyBottomSide(screenHeight) - edgeOffsetY;
             if (params.y > bottom || params.y < top) {
-                if (cy < rootHeight / 2f) {
+                if (cy < screenHeight / 2f) {
                     y = top;
                 } else {
                     y = bottom;
@@ -334,5 +439,9 @@ class TouchManager implements View.OnTouchListener {
         public boolean isAnimating() {
             return edgeAnimator.isRunning();
         }
+    }
+
+    void animateToBounds() {
+        stickyEdgeAnimator.animate();
     }
 }

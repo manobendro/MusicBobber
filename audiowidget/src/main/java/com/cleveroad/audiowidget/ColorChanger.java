@@ -17,13 +17,7 @@ class ColorChanger {
 		resultColorHsv = new float[3];
 	}
 
-	public ColorChanger(int fromColor, int toColor) {
-		this();
-		fromColor(fromColor);
-		toColor(toColor);
-	}
-
-	public ColorChanger fromColor(int fromColor) {
+    public ColorChanger fromColor(int fromColor) {
 		Color.colorToHSV(fromColor, fromColorHsv);
 		return this;
 	}

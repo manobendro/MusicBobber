@@ -12,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -55,9 +56,11 @@ public class AudioWidget {
     private final Controller controller;
 
     private final WindowManager windowManager;
+    private final Vibrator vibrator;
     private final Handler handler;
     private final Point screenSize;
     private final Context context;
+    private final TouchManager playPauseButtonManager;
 
     /**
      * Bounds of remove widget view. Used for checking if play/pause button is inside this bounds
@@ -84,6 +87,7 @@ public class AudioWidget {
     @SuppressWarnings("deprecation")
     private AudioWidget(@NonNull Builder builder) {
         this.context = builder.context.getApplicationContext();
+        this.vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         this.handler = new Handler();
         this.screenSize = new Point();
         this.removeBounds = new RectF();
@@ -101,10 +105,16 @@ public class AudioWidget {
         playPauseButton = new PlayPauseButton(configuration);
         expandCollapseWidget = new ExpandCollapseWidget(configuration);
         removeWidgetView = new RemoveWidgetView(configuration);
-        TouchManager playPauseButtonManager = TouchManager.create(playPauseButton, playPauseButton.newBoundsChecker(),
-                builder.edgeOffsetX, builder.edgeOffsetY);
-        TouchManager expandedWidgetManager = TouchManager.create(expandCollapseWidget, expandCollapseWidget.newBounceChecker(),
-                builder.edgeOffsetX, builder.edgeOffsetY);
+        playPauseButtonManager = new TouchManager(playPauseButton, playPauseButton.newBoundsChecker())
+                .edgeOffsetX(builder.edgeOffsetX)
+                .edgeOffsetY(builder.edgeOffsetY)
+                .screenWidth(screenSize.x)
+                .screenHeight(screenSize.y);
+        TouchManager expandedWidgetManager = new TouchManager(expandCollapseWidget, expandCollapseWidget.newBoundsChecker())
+                .edgeOffsetX(builder.edgeOffsetX)
+                .edgeOffsetY(builder.edgeOffsetY)
+                .screenWidth(screenSize.x)
+                .screenHeight(screenSize.y);
 
         playPauseButtonManager.callback(new PlayPauseButtonCallback());
         expandedWidgetManager.callback(new ExpandCollapseWidgetCallback());
@@ -130,6 +140,11 @@ public class AudioWidget {
         expandCollapseWidget.onControlsClickListener(onControlsClickListener);
     }
 
+    /**
+     * Prepare configuration for widget.
+     * @param builder user defined settings
+     * @return new configuration for widget
+     */
     private Configuration prepareConfiguration(@NonNull Builder builder) {
         int darkColor = builder.darkColorSet ? builder.darkColor : VersionUtil.color(context, R.color.aw_dark);
         int lightColor = builder.lightColorSet ? builder.lightColor : VersionUtil.color(context, R.color.aw_light);
@@ -192,6 +207,10 @@ public class AudioWidget {
                 .build();
     }
 
+    /**
+     * Get status bar height.
+     * @return status bar height.
+     */
     private int statusBarHeight() {
         int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
         if (resourceId > 0) {
@@ -200,7 +219,11 @@ public class AudioWidget {
         return context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
     }
 
-    public int navigationBarHeight() {
+    /**
+     * Get navigation bar height.
+     * @return navigation bar height
+     */
+    private int navigationBarHeight() {
         if (hasNavigationBar()) {
             int resourceId = context.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
             if (resourceId > 0) {
@@ -211,6 +234,10 @@ public class AudioWidget {
         return 0;
     }
 
+    /**
+     * Check if device has navigation bar.
+     * @return true if device has navigation bar, false otherwise.
+     */
     private boolean hasNavigationBar() {
         boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
         boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
@@ -303,6 +330,7 @@ public class AudioWidget {
         visibleRemWidY = screenSize.y - radius - (hasNavigationBar() ? 0 : widgetHeight);
         show(removeWidgetView, (int) remWidX, (int) hiddenRemWidY);
         show(playPauseButton, (int) (cx - widgetHeight), (int) (cy - widgetHeight));
+        playPauseButtonManager.animateToBounds();
     }
 
     /**
@@ -360,6 +388,9 @@ public class AudioWidget {
         windowManager.addView(view, params);
     }
 
+    /**
+     * Helper class for dealing with collapsed widget touch events.
+     */
     private class PlayPauseButtonCallback extends TouchManager.SimpleCallback {
 
         private final ValueAnimator.AnimatorUpdateListener animatorUpdateListener;
@@ -435,6 +466,9 @@ public class AudioWidget {
             if (curReadyToRemove != readyToRemove) {
                 readyToRemove = curReadyToRemove;
                 removeWidgetView.setOverlapped(readyToRemove);
+                if (readyToRemove && vibrator.hasVibrator()) {
+                    vibrator.vibrate(100);
+                }
             }
         }
 
@@ -469,6 +503,15 @@ public class AudioWidget {
             }
         }
 
+        @Override
+        public void onAnimationCompleted() {
+            super.onAnimationCompleted();
+            if (onWidgetStateChangedListener != null) {
+                WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
+                onWidgetStateChangedListener.onWidgetPositionChanged((int) (params.x + widgetHeight), (int) (params.y + widgetHeight));
+            }
+        }
+
         private boolean isReadyToRemove() {
             WindowManager.LayoutParams removeParams = (WindowManager.LayoutParams) removeWidgetView.getLayoutParams();
             removeBounds.set(removeParams.x, removeParams.y, removeParams.x + widgetHeight, removeParams.y + widgetHeight);
@@ -479,6 +522,9 @@ public class AudioWidget {
         }
     }
 
+    /**
+     * Helper class for dealing with expanded widget touch events.
+     */
     private class ExpandCollapseWidgetCallback extends TouchManager.SimpleCallback {
 
         @Override
@@ -530,6 +576,12 @@ public class AudioWidget {
             if (onWidgetStateChangedListener != null) {
                 onWidgetStateChangedListener.onWidgetPositionChanged((int) (params.x + widgetHeight), (int) (params.y + widgetHeight));
             }
+        }
+
+        @Override
+        public void onAnimationCompleted() {
+            super.onAnimationCompleted();
+            updatePlayPauseButtonPosition();
         }
     }
 
@@ -584,6 +636,9 @@ public class AudioWidget {
         }
     }
 
+    /**
+     * Builder class for {@link AudioWidget}.
+     */
     public static class Builder {
 
         private final Context context;
@@ -1040,6 +1095,9 @@ public class AudioWidget {
         void onWidgetPositionChanged(int cx, int cy);
     }
 
+    /**
+     * Widget state.
+     */
     public enum State {
         COLLAPSED,
         EXPANDED,

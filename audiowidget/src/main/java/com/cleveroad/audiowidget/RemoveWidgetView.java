@@ -62,6 +62,10 @@ class RemoveWidgetView extends View {
 		canvas.drawLine(x1, y1, x2, y2, paint);
 	}
 
+    /**
+     * Set overlapped state.
+     * @param overlapped true if widget overlapped, false otherwise
+     */
     public void setOverlapped(boolean overlapped) {
         if (overlapped) {
             if (paint.getColor() != overlappedColor) {

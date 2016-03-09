@@ -641,7 +641,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         }
     }
 
-    public TouchManager.BoundsChecker newBounceChecker() {
+    public TouchManager.BoundsChecker newBoundsChecker() {
         return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight);
     }
 

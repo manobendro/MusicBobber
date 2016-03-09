@@ -9,7 +9,16 @@ To use Audio Widget Overlay first add dependency to your project:
 dependencies {
     compile 'com.cleveroad:audiowidget:0.9.0'
 }
-``` 
+```
+This library will add two new permissions to your manifest:
+```XML
+<!-- used for drawing widget. This permission must be granted before calling AudioWidget.show(). -->
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+<!-- used for notifing user that he is about to remove widget when he drags it on remove widget icon. -->
+<!-- This permission granted by default on Android 6.0+ devices. -->
+<uses-permission android:name="android.permission.VIBRATE"/>
+```
  
 Then you can create new instance of widget using builder:
 ```JAVA
@@ -96,6 +105,31 @@ To show audio widget on screen call **AudioWidget.show(int, int)** method. To hi
 audioWidget.show(100, 100); // coordinates in pixels on screen from top left corner
 ...
 audioWidget.hide();
+```
+
+But make sure that your app has permission to draw over another apps in Android 6.0+. You can do it like this (in Activity):
+```JAVA
+    ...
+    
+    // somewhere in your code
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+        startActivityForResult(intent, OVERLAY_PERMISSION_REQ_CODE);
+    }
+    
+    ...
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == OVERLAY_PERMISSION_REQ_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+                // now you can show audio widget
+            }
+        }
+    }
+    
+    ...
 ```
 
 <br />

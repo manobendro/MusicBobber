@@ -41,8 +41,7 @@ class DrawableUtils {
 			return 0;
 		if (val > maxVal)
 			return 1;
-		float t = (val - minVal) / (maxVal - minVal);
-		return t;
+        return (val - minVal) / (maxVal - minVal);
 	}
 
 	/**

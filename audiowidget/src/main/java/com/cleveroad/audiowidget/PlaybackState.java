@@ -82,10 +82,25 @@ class PlaybackState {
 		}
 	}
 
+    /**
+     * Playback state listener.
+     */
 	interface PlaybackStateListener {
 
+        /**
+         * Called when playback state is changed.
+         * @param oldState old playback state
+         * @param newState new playback state
+         * @param initiator who initiate changes
+         */
 		void onStateChanged(int oldState, int newState, Object initiator);
 
+        /**
+         * Called when playback progress changed.
+         * @param position current position of track
+         * @param duration duration of track
+         * @param percentage value equals to {@code position / duration}
+         */
 		void onProgressChanged(int position, int duration, float percentage);
 	}
 }
