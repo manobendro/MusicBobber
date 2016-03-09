@@ -45,8 +45,8 @@ class MusicAdapter extends BaseRecyclerViewAdapter<MusicItem, MusicAdapter.Music
                 .load(item.albumArtUri())
                 .asBitmap()
                 .transform(cropCircleTransformation)
-                .placeholder(R.drawable.ic_default_album)
-                .error(R.drawable.ic_default_album)
+                .placeholder(R.drawable.aw_ic_default_album)
+                .error(R.drawable.aw_ic_default_album)
                 .into(holder.albumCover);
     }
 

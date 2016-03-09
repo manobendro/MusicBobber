@@ -160,12 +160,12 @@ public class AudioWidget {
         int crossOverlappedColor = builder.crossOverlappedColorSet ? builder.crossOverlappedColor : VersionUtil.color(context, R.color.aw_cross_overlapped);
         int shadowColor = builder.shadowColorSet ? builder.shadowColor : VersionUtil.color(context, R.color.aw_shadow);
 
-        Drawable playDrawable = builder.playDrawable != null ? builder.playDrawable : VersionUtil.drawable(context, R.drawable.ic_play);
-        Drawable pauseDrawable = builder.pauseDrawable != null ? builder.pauseDrawable : VersionUtil.drawable(context, R.drawable.ic_pause);
-        Drawable prevDrawable = builder.prevDrawable != null ? builder.prevDrawable : VersionUtil.drawable(context, R.drawable.ic_prev);
-        Drawable nextDrawable = builder.nextDrawable != null ? builder.nextDrawable : VersionUtil.drawable(context, R.drawable.ic_next);
-        Drawable playlistDrawable = builder.playlistDrawable != null ? builder.playlistDrawable : VersionUtil.drawable(context, R.drawable.ic_playlist);
-        Drawable albumDrawable = builder.defaultAlbumDrawable != null ? builder.defaultAlbumDrawable : VersionUtil.drawable(context, R.drawable.ic_default_album);
+        Drawable playDrawable = builder.playDrawable != null ? builder.playDrawable : VersionUtil.drawable(context, R.drawable.aw_ic_play);
+        Drawable pauseDrawable = builder.pauseDrawable != null ? builder.pauseDrawable : VersionUtil.drawable(context, R.drawable.aw_ic_pause);
+        Drawable prevDrawable = builder.prevDrawable != null ? builder.prevDrawable : VersionUtil.drawable(context, R.drawable.aw_ic_prev);
+        Drawable nextDrawable = builder.nextDrawable != null ? builder.nextDrawable : VersionUtil.drawable(context, R.drawable.aw_ic_next);
+        Drawable playlistDrawable = builder.playlistDrawable != null ? builder.playlistDrawable : VersionUtil.drawable(context, R.drawable.aw_ic_playlist);
+        Drawable albumDrawable = builder.defaultAlbumDrawable != null ? builder.defaultAlbumDrawable : VersionUtil.drawable(context, R.drawable.aw_ic_default_album);
 
         int buttonPadding = builder.buttonPaddingSet ? builder.buttonPadding : context.getResources().getDimensionPixelSize(R.dimen.aw_button_padding);
         float crossStrokeWidth = builder.crossStrokeWidthSet ? builder.crossStrokeWidth : context.getResources().getDimension(R.dimen.aw_cross_stroke_width);
