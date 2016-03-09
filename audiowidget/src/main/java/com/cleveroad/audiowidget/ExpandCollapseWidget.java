@@ -572,9 +572,9 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		return animatingCollapse || animatingExpand;
 	}
 
-	public void collapse() {
+	public boolean collapse() {
 		if (!expanded) {
-			return;
+			return false;
 		}
 		if (playbackState.state() == Configuration.STATE_PLAYING) {
 			colorChanger
@@ -586,6 +586,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 					.toColor(pauseColor);
 		}
 		startCollapseAnimation();
+        return true;
 	}
 
 	@Override
@@ -646,18 +647,19 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         }
     }
 
-    public TouchManager.BoundsChecker newBoundsChecker() {
-        return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight);
+    public TouchManager.BoundsChecker newBoundsChecker(int offsetX, int offsetY) {
+        return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight, offsetX, offsetY);
     }
 
-    private static final class BoundsCheckerImpl implements TouchManager.BoundsChecker {
+    private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {
 
         private float radius;
         private float padding;
         private float widgetWidth;
         private float widgetHeight;
 
-        public BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight) {
+        public BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight, int offsetX, int offsetY) {
+            super(offsetX, offsetY);
             this.radius = radius;
             this.padding = padding;
             this.widgetWidth = widgetWidth;
@@ -665,22 +667,22 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         }
 
         @Override
-        public float stickyLeftSide(float screenWidth) {
+        public float stickyLeftSideImpl(float screenWidth) {
             return 0;
         }
 
         @Override
-        public float stickyRightSide(float screenWidth) {
+        public float stickyRightSideImpl(float screenWidth) {
             return screenWidth - widgetWidth;
         }
 
         @Override
-        public float stickyBottomSide(float screenHeight) {
+        public float stickyBottomSideImpl(float screenHeight) {
             return screenHeight - 3 * radius;
         }
 
         @Override
-        public float stickyTopSide(float screenHeight) {
+        public float stickyTopSideImpl(float screenHeight) {
             return -radius;
         }
     }
