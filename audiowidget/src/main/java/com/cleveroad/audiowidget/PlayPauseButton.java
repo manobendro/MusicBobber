@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 
 import java.util.Random;
 
@@ -104,6 +105,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
 		this.touchUpAnimator.addUpdateListener(listener);
 		this.bubblesAnimator = ValueAnimator.ofInt(0, (int)ANIMATION_TIME_L).setDuration(ANIMATION_TIME_L);
+        this.bubblesAnimator.setInterpolator(new LinearInterpolator());
 		this.bubblesAnimator.addUpdateListener(animation -> {
 			long position = animation.getCurrentPlayTime();
 			float fraction = animation.getAnimatedFraction();
@@ -130,7 +132,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 				animatingBubbles = false;
 			}
 		});
-		this.progressAnimator = ValueAnimator.ofFloat();
+		this.progressAnimator = new ValueAnimator();
 		this.progressAnimator.addUpdateListener(animation -> {
 			animatedProgress = (float) animation.getAnimatedValue();
 			invalidate();

@@ -15,4 +15,6 @@
     <dimen name="aw_bubbles_min_size">5dp</dimen>
     <dimen name="aw_bubbles_max_size">10dp</dimen>
     <dimen name="aw_navigation_bar_height">48dp</dimen>
+    <dimen name="aw_edge_offset_collapsed">-10dp</dimen>
+    <dimen name="aw_edge_offset_expanded">0dp</dimen>
 </resources>

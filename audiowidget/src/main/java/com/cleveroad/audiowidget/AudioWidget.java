@@ -30,6 +30,7 @@ import java.util.Random;
  */
 public class AudioWidget {
 
+    private static final long VIBRATION_DURATION = 100;
     /**
      * Play/pause button view.
      */
@@ -105,14 +106,16 @@ public class AudioWidget {
         playPauseButton = new PlayPauseButton(configuration);
         expandCollapseWidget = new ExpandCollapseWidget(configuration);
         removeWidgetView = new RemoveWidgetView(configuration);
+        int offsetCollapsed = context.getResources().getDimensionPixelOffset(R.dimen.aw_edge_offset_collapsed);
+        int offsetExpanded = context.getResources().getDimensionPixelOffset(R.dimen.aw_edge_offset_expanded);
         playPauseButtonManager = new TouchManager(playPauseButton, playPauseButton.newBoundsChecker())
-                .edgeOffsetX(builder.edgeOffsetX)
-                .edgeOffsetY(builder.edgeOffsetY)
+                .edgeOffsetX(builder.edgeOffsetXCollapsedSet ? builder.edgeOffsetXCollapsed : offsetCollapsed)
+                .edgeOffsetY(builder.edgeOffsetYCollapsedSet ? builder.edgeOffsetYCollapsed : offsetCollapsed)
                 .screenWidth(screenSize.x)
                 .screenHeight(screenSize.y);
         TouchManager expandedWidgetManager = new TouchManager(expandCollapseWidget, expandCollapseWidget.newBoundsChecker())
-                .edgeOffsetX(builder.edgeOffsetX)
-                .edgeOffsetY(builder.edgeOffsetY)
+                .edgeOffsetX(builder.edgeOffsetXExpandedSet ? builder.edgeOffsetXExpanded : offsetExpanded)
+                .edgeOffsetY(builder.edgeOffsetYExpandedSet ? builder.edgeOffsetYExpanded : offsetExpanded)
                 .screenWidth(screenSize.x)
                 .screenHeight(screenSize.y);
 
@@ -121,10 +124,13 @@ public class AudioWidget {
         expandCollapseWidget.onWidgetStateChangedListener(new OnWidgetStateChangedListener() {
             @Override
             public void onWidgetStateChanged(@NonNull State state) {
-                if (state == State.COLLAPSED) {
+                if (state == State.EXPANDED) {
+                    expandedWidgetManager.animateToBounds();
+                } else if (state == State.COLLAPSED) {
                     playPauseButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
                     windowManager.removeView(expandCollapseWidget);
                     playPauseButton.enableProgressChanges(true);
+                    playPauseButtonManager.animateToBounds();
                 }
                 if (onWidgetStateChangedListener != null) {
                     onWidgetStateChangedListener.onWidgetStateChanged(state);
@@ -362,6 +368,59 @@ public class AudioWidget {
         return shown;
     }
 
+    public void expand() {
+        playPauseButton.enableProgressChanges(false);
+        playPauseButton.postDelayed(this::checkSpaceAndShowExpanded, PlayPauseButton.PROGRESS_CHANGES_DURATION);
+    }
+
+    public void collapse() {
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
+        if (params.x < widgetHeight && expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_LEFT) { // stick on the left side.
+            expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_RIGHT);
+            updatePlayPauseButtonPosition();
+        } else if (Math.abs(params.x + widgetWidth - screenSize.x) <= widgetHeight && expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
+            expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_LEFT);
+            updatePlayPauseButtonPosition();
+        }
+        expandCollapseWidget.collapse();
+    }
+
+    private void updatePlayPauseButtonPosition() {
+        WindowManager.LayoutParams widgetParams = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
+        if (expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
+            params.x = (int) (widgetParams.x - radius);
+        } else {
+            params.x = (int) (widgetParams.x + widgetWidth - widgetHeight - radius);
+        }
+        params.y = widgetParams.y;
+        windowManager.updateViewLayout(playPauseButton, params);
+        if (onWidgetStateChangedListener != null) {
+            onWidgetStateChangedListener.onWidgetPositionChanged((int) (params.x + widgetHeight), (int) (params.y + widgetHeight));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void checkSpaceAndShowExpanded() {
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
+        int x = params.x;
+        int y = params.y;
+        int expandDirection;
+        if (x + widgetHeight > screenSize.x / 2) {
+            expandDirection = ExpandCollapseWidget.DIRECTION_LEFT;
+        } else {
+            expandDirection = ExpandCollapseWidget.DIRECTION_RIGHT;
+        }
+        if (expandDirection == ExpandCollapseWidget.DIRECTION_LEFT) {
+            x -= widgetWidth - widgetHeight * 1.5f;
+        } else {
+            x += widgetHeight / 2f;
+        }
+        show(expandCollapseWidget, x, y);
+        playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
+        expandCollapseWidget.expand(expandDirection);
+    }
+
     /**
      * Get widget controller.
      *
@@ -418,29 +477,7 @@ public class AudioWidget {
         @Override
         public void onLongClick(float x, float y) {
             released = true;
-            playPauseButton.enableProgressChanges(false);
-            playPauseButton.postDelayed(this::checkSpaceAndShowExpanded, PlayPauseButton.PROGRESS_CHANGES_DURATION);
-        }
-
-        @SuppressWarnings("deprecation")
-        private void checkSpaceAndShowExpanded() {
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
-            int x = params.x;
-            int y = params.y;
-            int expandDirection;
-            if (x + widgetHeight > screenSize.x / 2) {
-                expandDirection = ExpandCollapseWidget.DIRECTION_LEFT;
-            } else {
-                expandDirection = ExpandCollapseWidget.DIRECTION_RIGHT;
-            }
-            if (expandDirection == ExpandCollapseWidget.DIRECTION_LEFT) {
-                x -= widgetWidth - widgetHeight * 1.5f;
-            } else {
-                x += widgetHeight / 2f;
-            }
-            show(expandCollapseWidget, x, y);
-            playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
-            expandCollapseWidget.expand(expandDirection);
+            expand();
         }
 
         @Override
@@ -467,7 +504,7 @@ public class AudioWidget {
                 readyToRemove = curReadyToRemove;
                 removeWidgetView.setOverlapped(readyToRemove);
                 if (readyToRemove && vibrator.hasVibrator()) {
-                    vibrator.vibrate(100);
+                    vibrator.vibrate(VIBRATION_DURATION);
                 }
             }
         }
@@ -546,36 +583,13 @@ public class AudioWidget {
 
         @Override
         public void onTouchOutside() {
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
-            if (params.x < widgetHeight && expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_LEFT) { // stick on the left side.
-                expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_RIGHT);
-                updatePlayPauseButtonPosition();
-            } else if (Math.abs(params.x + widgetWidth - screenSize.x) <= widgetHeight && expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
-                expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_LEFT);
-                updatePlayPauseButtonPosition();
-            }
-            expandCollapseWidget.collapse();
+            collapse();
         }
 
         @Override
         public void onMoved(float diffX, float diffY) {
             super.onMoved(diffX, diffY);
             updatePlayPauseButtonPosition();
-        }
-
-        private void updatePlayPauseButtonPosition() {
-            WindowManager.LayoutParams widgetParams = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
-            if (expandCollapseWidget.expandDirection() == ExpandCollapseWidget.DIRECTION_RIGHT) {
-                params.x = (int) (widgetParams.x - radius);
-            } else {
-                params.x = (int) (widgetParams.x + widgetWidth - widgetHeight - radius);
-            }
-            params.y = widgetParams.y;
-            windowManager.updateViewLayout(playPauseButton, params);
-            if (onWidgetStateChangedListener != null) {
-                onWidgetStateChangedListener.onWidgetPositionChanged((int) (params.x + widgetHeight), (int) (params.y + widgetHeight));
-            }
         }
 
         @Override
@@ -595,10 +609,12 @@ public class AudioWidget {
         }
 
         @Override
-        public void onPlaylistClicked() {
-            if (onControlsClickListener != null) {
-                onControlsClickListener.onPlaylistClicked();
+        public boolean onPlaylistClicked() {
+            if (onControlsClickListener == null || onControlsClickListener.onPlaylistClicked()) {
+                expandCollapseWidget.collapse();
+                return true;
             }
+            return false;
         }
 
         @Override
@@ -686,8 +702,14 @@ public class AudioWidget {
         private boolean shadowDySet;
         private boolean bubblesMinSizeSet;
         private boolean bubblesMaxSizeSet;
-        private int edgeOffsetX;
-        private int edgeOffsetY;
+        private int edgeOffsetXCollapsed;
+        private int edgeOffsetYCollapsed;
+        private int edgeOffsetXExpanded;
+        private int edgeOffsetYExpanded;
+        private boolean edgeOffsetXCollapsedSet;
+        private boolean edgeOffsetYCollapsedSet;
+        private boolean edgeOffsetXExpandedSet;
+        private boolean edgeOffsetYExpandedSet;
 
         public Builder(@NonNull Context context) {
             this.context = context;
@@ -904,8 +926,9 @@ public class AudioWidget {
          * Set widget edge offset on X axis
          * @param edgeOffsetX widget edge offset on X axis
          */
-        public Builder edgeOffsetX(int edgeOffsetX) {
-            this.edgeOffsetX = edgeOffsetX;
+        public Builder edgeOffsetXCollapsed(int edgeOffsetX) {
+            this.edgeOffsetXCollapsed = edgeOffsetX;
+            edgeOffsetXCollapsedSet = true;
             return this;
         }
 
@@ -913,8 +936,21 @@ public class AudioWidget {
          * Set widget edge offset on Y axis
          * @param edgeOffsetY widget edge offset on Y axis
          */
-        public Builder edgeOffsetY(int edgeOffsetY) {
-            this.edgeOffsetY = edgeOffsetY;
+        public Builder edgeOffsetYCollapsed(int edgeOffsetY) {
+            this.edgeOffsetYCollapsed = edgeOffsetY;
+            edgeOffsetYCollapsedSet = true;
+            return this;
+        }
+
+        public Builder edgeOffsetYExpanded(int edgeOffsetY) {
+            this.edgeOffsetYExpanded = edgeOffsetY;
+            edgeOffsetYExpandedSet = true;
+            return this;
+        }
+
+        public Builder edgeOffsetXExpanded(int edgeOffsetX) {
+            this.edgeOffsetXExpanded = edgeOffsetX;
+            edgeOffsetXExpandedSet = true;
             return this;
         }
 
@@ -1050,8 +1086,9 @@ public class AudioWidget {
 
         /**
          * Called when playlist button clicked.
+         * @return true to collapse widget, false otherwise
          */
-        void onPlaylistClicked();
+        boolean onPlaylistClicked();
 
         /**
          * Called when previous track button clicked.

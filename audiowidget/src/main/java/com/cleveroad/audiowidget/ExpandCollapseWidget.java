@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 
 import java.util.Random;
 
@@ -145,6 +146,8 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.bubblePositions = new float[TOTAL_BUBBLES_COUNT * 2];
 		this.playbackState.addPlaybackStateListener(this);
 		this.expandAnimator = ValueAnimator.ofInt(0, (int) EXPAND_DURATION_L).setDuration(EXPAND_DURATION_L);
+        LinearInterpolator interpolator = new LinearInterpolator();
+        this.expandAnimator.setInterpolator(interpolator);
 		this.expandAnimator.addUpdateListener(animation -> {
 			int position = (int) animation.getAnimatedValue();
 			updateExpandAnimation(position);
@@ -174,6 +177,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			}
 		});
 		this.collapseAnimator = ValueAnimator.ofInt(0, (int) COLLAPSE_DURATION_L).setDuration(COLLAPSE_DURATION_L);
+        this.collapseAnimator.setInterpolator(interpolator);
 		this.collapseAnimator.addUpdateListener(animation -> {
 			int position = (int) animation.getAnimatedValue();
 			updateCollapseAnimation(position);
@@ -224,6 +228,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         touchUpAnimator.addUpdateListener(listener);
         bubblesTouchAnimator = ValueAnimator.ofFloat(0, EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F)
                 .setDuration((long) (EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F));
+        bubblesTouchAnimator.setInterpolator(interpolator);
         bubblesTouchAnimator.addUpdateListener(animation -> {
             bubblesTime = animation.getAnimatedFraction();
             bubblesPaint.setAlpha((int) DrawableUtils.customFunction(bubblesTime, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));

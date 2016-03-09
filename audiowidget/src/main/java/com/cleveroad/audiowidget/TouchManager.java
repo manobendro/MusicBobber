@@ -337,7 +337,11 @@ class TouchManager implements View.OnTouchListener {
                 if (callback != null) {
                     callback.onMoved(dx, dy);
                 }
-                windowManager.updateViewLayout(view, params);
+                try {
+                    windowManager.updateViewLayout(view, params);
+                } catch (IllegalArgumentException e) {
+                    velocityAnimator.cancel();
+                }
             });
             velocityAnimator.addListener(new SimpleAnimatorListener() {
 
@@ -398,7 +402,11 @@ class TouchManager implements View.OnTouchListener {
                 }
                 params.x = x;
                 params.y = y;
-                windowManager.updateViewLayout(view, params);
+                try {
+                    windowManager.updateViewLayout(view, params);
+                } catch (IllegalArgumentException e) {
+                    edgeAnimator.cancel();
+                }
             });
             edgeAnimator.addListener(new SimpleAnimatorListener() {
                 @Override

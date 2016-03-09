@@ -77,10 +77,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        audioWidget = new AudioWidget.Builder(this)
-                .edgeOffsetX(-30)
-                .edgeOffsetY(-30)
-                .build();
+        audioWidget = new AudioWidget.Builder(this).build();
         audioWidget.controller().onControlsClickListener(this);
         audioWidget.controller().onWidgetStateChangedListener(this);
         cropCircleTransformation = new CropCircleTransformation(this);
@@ -156,6 +153,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onDestroy() {
+        audioWidget.controller().onControlsClickListener(null);
+        audioWidget.controller().onWidgetStateChangedListener(null);
         audioWidget.hide();
         audioWidget = null;
         if (mediaPlayer.isPlaying()) {
@@ -182,10 +181,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         audioWidget.controller().duration(mediaPlayer.getDuration());
         stopTrackingPosition();
         startTrackingPosition();
+        int size = getResources().getDimensionPixelSize(R.dimen.cover_size);
         Glide.with(this)
                 .load(items.get(playingIndex).albumArtUri())
                 .asBitmap()
-                .override(100, 100) // TODO: 04.03.2016 dp to px
+                .override(size, size)
                 .centerCrop()
                 .transform(cropCircleTransformation)
                 .into(new SimpleTarget<Bitmap>() {
@@ -230,11 +230,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     @Override
-    public void onPlaylistClicked() {
+    public boolean onPlaylistClicked() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+        return true;
     }
 
     @Override
