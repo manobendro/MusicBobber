@@ -62,6 +62,9 @@ public class AudioWidget {
     private final Point screenSize;
     private final Context context;
     private final TouchManager playPauseButtonManager;
+    private final TouchManager expandedWidgetManager;
+    private final TouchManager.BoundsChecker ppbToExpBoundsChecker;
+    private final TouchManager.BoundsChecker expToPpbBoundsChecker;
 
     /**
      * Bounds of remove widget view. Used for checking if play/pause button is inside this bounds
@@ -108,14 +111,16 @@ public class AudioWidget {
         removeWidgetView = new RemoveWidgetView(configuration);
         int offsetCollapsed = context.getResources().getDimensionPixelOffset(R.dimen.aw_edge_offset_collapsed);
         int offsetExpanded = context.getResources().getDimensionPixelOffset(R.dimen.aw_edge_offset_expanded);
-        playPauseButtonManager = new TouchManager(playPauseButton, playPauseButton.newBoundsChecker())
-                .edgeOffsetX(builder.edgeOffsetXCollapsedSet ? builder.edgeOffsetXCollapsed : offsetCollapsed)
-                .edgeOffsetY(builder.edgeOffsetYCollapsedSet ? builder.edgeOffsetYCollapsed : offsetCollapsed)
+        playPauseButtonManager = new TouchManager(playPauseButton, playPauseButton.newBoundsChecker(
+                builder.edgeOffsetXCollapsedSet ? builder.edgeOffsetXCollapsed : offsetCollapsed,
+                builder.edgeOffsetYCollapsedSet ? builder.edgeOffsetYCollapsed : offsetCollapsed
+        ))
                 .screenWidth(screenSize.x)
                 .screenHeight(screenSize.y);
-        TouchManager expandedWidgetManager = new TouchManager(expandCollapseWidget, expandCollapseWidget.newBoundsChecker())
-                .edgeOffsetX(builder.edgeOffsetXExpandedSet ? builder.edgeOffsetXExpanded : offsetExpanded)
-                .edgeOffsetY(builder.edgeOffsetYExpandedSet ? builder.edgeOffsetYExpanded : offsetExpanded)
+        expandedWidgetManager = new TouchManager(expandCollapseWidget, expandCollapseWidget.newBoundsChecker(
+                builder.edgeOffsetXExpandedSet ? builder.edgeOffsetXExpanded : offsetExpanded,
+                builder.edgeOffsetYExpandedSet ? builder.edgeOffsetYExpanded : offsetExpanded
+        ))
                 .screenWidth(screenSize.x)
                 .screenHeight(screenSize.y);
 
@@ -124,13 +129,10 @@ public class AudioWidget {
         expandCollapseWidget.onWidgetStateChangedListener(new OnWidgetStateChangedListener() {
             @Override
             public void onWidgetStateChanged(@NonNull State state) {
-                if (state == State.EXPANDED) {
-                    expandedWidgetManager.animateToBounds();
-                } else if (state == State.COLLAPSED) {
+                if (state == State.COLLAPSED) {
                     playPauseButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
                     windowManager.removeView(expandCollapseWidget);
                     playPauseButton.enableProgressChanges(true);
-                    playPauseButtonManager.animateToBounds();
                 }
                 if (onWidgetStateChangedListener != null) {
                     onWidgetStateChangedListener.onWidgetStateChanged(state);
@@ -144,6 +146,14 @@ public class AudioWidget {
         });
         onControlsClickListener = new OnControlsClickListenerWrapper();
         expandCollapseWidget.onControlsClickListener(onControlsClickListener);
+        ppbToExpBoundsChecker = playPauseButton.newBoundsChecker(
+                builder.edgeOffsetXExpandedSet ? builder.edgeOffsetXExpanded : offsetExpanded,
+                builder.edgeOffsetYExpandedSet ? builder.edgeOffsetYExpanded : offsetExpanded
+        );
+        expToPpbBoundsChecker = expandCollapseWidget.newBoundsChecker(
+                builder.edgeOffsetXCollapsedSet ? builder.edgeOffsetXCollapsed : offsetCollapsed,
+                builder.edgeOffsetYCollapsedSet ? builder.edgeOffsetYCollapsed : offsetCollapsed
+        );
     }
 
     /**
@@ -382,7 +392,10 @@ public class AudioWidget {
             expandCollapseWidget.expandDirection(ExpandCollapseWidget.DIRECTION_LEFT);
             updatePlayPauseButtonPosition();
         }
-        expandCollapseWidget.collapse();
+        if (expandCollapseWidget.collapse()) {
+            playPauseButtonManager.animateToBounds();
+            expandedWidgetManager.animateToBounds(expToPpbBoundsChecker);
+        }
     }
 
     private void updatePlayPauseButtonPosition() {
@@ -419,6 +432,8 @@ public class AudioWidget {
         show(expandCollapseWidget, x, y);
         playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
         expandCollapseWidget.expand(expandDirection);
+        expandedWidgetManager.animateToBounds();
+        playPauseButtonManager.animateToBounds(ppbToExpBoundsChecker);
     }
 
     /**
@@ -445,6 +460,41 @@ public class AudioWidget {
         params.x = left;
         params.y = top;
         windowManager.addView(view, params);
+    }
+
+    abstract static class BoundsCheckerWithOffset implements TouchManager.BoundsChecker {
+
+        private int offsetX, offsetY;
+
+        public BoundsCheckerWithOffset(int offsetX, int offsetY) {
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+        }
+
+        @Override
+        public final float stickyLeftSide(float screenWidth) {
+            return stickyLeftSideImpl(screenWidth) + offsetX;
+        }
+
+        @Override
+        public final float stickyRightSide(float screenWidth) {
+            return stickyRightSideImpl(screenWidth) - offsetX;
+        }
+
+        @Override
+        public final float stickyTopSide(float screenHeight) {
+            return stickyTopSideImpl(screenHeight) + offsetY;
+        }
+
+        @Override
+        public final float stickyBottomSide(float screenHeight) {
+            return stickyBottomSideImpl(screenHeight) - offsetY;
+        }
+
+        protected abstract float stickyLeftSideImpl(float screenWidth);
+        protected abstract float stickyRightSideImpl(float screenWidth);
+        protected abstract float stickyTopSideImpl(float screenHeight);
+        protected abstract float stickyBottomSideImpl(float screenHeight);
     }
 
     /**
@@ -611,7 +661,7 @@ public class AudioWidget {
         @Override
         public boolean onPlaylistClicked() {
             if (onControlsClickListener == null || onControlsClickListener.onPlaylistClicked()) {
-                expandCollapseWidget.collapse();
+                collapse();
                 return true;
             }
             return false;

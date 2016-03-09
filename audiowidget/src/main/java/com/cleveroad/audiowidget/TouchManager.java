@@ -31,8 +31,6 @@ class TouchManager implements View.OnTouchListener {
     private Callback callback;
     private int screenWidth;
     private int screenHeight;
-    private int edgeOffsetX;
-    private int edgeOffsetY;
     private Float lastRawX, lastRawY;
 
     public TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
@@ -56,16 +54,6 @@ class TouchManager implements View.OnTouchListener {
 
     public TouchManager screenHeight(int screenHeight) {
         this.screenHeight = screenHeight;
-        return this;
-    }
-
-    public TouchManager edgeOffsetX(int edgeOffsetX) {
-        this.edgeOffsetX = edgeOffsetX;
-        return this;
-    }
-
-    public TouchManager edgeOffsetY(int edgeOffsetY) {
-        this.edgeOffsetY = edgeOffsetY;
         return this;
     }
 
@@ -295,7 +283,7 @@ class TouchManager implements View.OnTouchListener {
             lastEventTime = 0;
             velX = velY = 0;
             if (!velocityAnimator.isAnimating()) {
-                stickyEdgeAnimator.animate();
+                stickyEdgeAnimator.animate(boundsChecker);
             }
         }
 
@@ -349,14 +337,14 @@ class TouchManager implements View.OnTouchListener {
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
                     prevPlayTime = 0;
-                    stickyEdgeAnimator.animate();
+                    stickyEdgeAnimator.animate(boundsChecker);
                 }
 
                 @Override
                 public void onAnimationCancel(Animator animation) {
                     super.onAnimationCancel(animation);
                     prevPlayTime = 0;
-                    stickyEdgeAnimator.animate();
+                    stickyEdgeAnimator.animate(boundsChecker);
                 }
             });
         }
@@ -419,19 +407,21 @@ class TouchManager implements View.OnTouchListener {
             });
         }
 
-        public void animate() {
+        public void animate(BoundsChecker boundsChecker) {
+            if (edgeAnimator.isRunning())
+                return;
             params = (WindowManager.LayoutParams) view.getLayoutParams();
             float cx = params.x + view.getWidth() / 2f;
             float cy = params.y + view.getWidth() / 2f;
             int x;
             if (cx < screenWidth / 2f) {
-                x = (int) boundsChecker.stickyLeftSide(screenWidth) + edgeOffsetX;
+                x = (int) boundsChecker.stickyLeftSide(screenWidth);
             } else {
-                x = (int) boundsChecker.stickyRightSide(screenWidth) - edgeOffsetX;
+                x = (int) boundsChecker.stickyRightSide(screenWidth);
             }
             int y = params.y;
-            int top = (int) boundsChecker.stickyTopSide(screenHeight) + edgeOffsetY;
-            int bottom = (int) boundsChecker.stickyBottomSide(screenHeight) - edgeOffsetY;
+            int top = (int) boundsChecker.stickyTopSide(screenHeight);
+            int bottom = (int) boundsChecker.stickyBottomSide(screenHeight);
             if (params.y > bottom || params.y < top) {
                 if (cy < screenHeight / 2f) {
                     y = top;
@@ -449,7 +439,11 @@ class TouchManager implements View.OnTouchListener {
         }
     }
 
+    void animateToBounds(BoundsChecker boundsChecker) {
+        stickyEdgeAnimator.animate(boundsChecker);
+    }
+
     void animateToBounds() {
-        stickyEdgeAnimator.animate();
+        stickyEdgeAnimator.animate(boundsChecker);
     }
 }

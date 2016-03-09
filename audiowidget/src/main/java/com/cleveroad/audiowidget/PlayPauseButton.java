@@ -315,35 +315,36 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
         return true;
 	}
 
-    public TouchManager.BoundsChecker newBoundsChecker() {
-        return new BoundsCheckerImpl(radius);
+    public TouchManager.BoundsChecker newBoundsChecker(int offsetX, int offsetY) {
+        return new BoundsCheckerImpl(radius, offsetX, offsetY);
     }
 
-	private static final class BoundsCheckerImpl implements TouchManager.BoundsChecker {
+	private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {
 
         private float radius;
 
-        public BoundsCheckerImpl(float radius) {
+        public BoundsCheckerImpl(float radius, int offsetX, int offsetY) {
+            super(offsetX, offsetY);
             this.radius = radius;
         }
 
         @Override
-        public float stickyLeftSide(float screenWidth) {
+        public float stickyLeftSideImpl(float screenWidth) {
             return -radius;
         }
 
         @Override
-        public float stickyRightSide(float screenWidth) {
+        public float stickyRightSideImpl(float screenWidth) {
             return screenWidth - radius * 3;
         }
 
         @Override
-        public float stickyBottomSide(float screenHeight) {
+        public float stickyBottomSideImpl(float screenHeight) {
             return screenHeight - radius * 3;
         }
 
         @Override
-        public float stickyTopSide(float screenHeight) {
+        public float stickyTopSideImpl(float screenHeight) {
             return -radius;
         }
     }
