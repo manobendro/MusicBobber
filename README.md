@@ -7,7 +7,7 @@ You know, guys, we have become a bit obsessed with music recently. See yourself 
 
 ![Demo image](/images/demo.gif)
 
-###### Also you can watch the animation of the <strong><a href="https://youtu.be/4qehnkTR8z8?list=PLi-FH7__aeiydOwY_1q5I8P2EUSseqUCj">Audio Widget Overlay on YouTube</a></strong> in HD quality.
+###### Also you can watch the animation of the <strong><a target="_blank" href="https://youtu.be/4qehnkTR8z8?list=PLi-FH7__aeiydOwY_1q5I8P2EUSseqUCj">Audio Widget Overlay on YouTube</a></strong> in HD quality.
 
 Our invention can facilitate the user’s interaction with a music player and nicely decorate his device screen. Moreover, it’s really easy to integrate! Read our <strong><a href="https://www.cleveroad.com/blog/case-study-audio-widget-overlay-view-by-cleveroad">Case Study: Audio Widget Overlay View by Cleveroad</a></strong> to ensure that and find more of useful information.
 
