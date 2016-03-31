@@ -154,7 +154,7 @@ But make sure that your app has permission to draw over another apps in Android 
 <br />
 #### Support ####
 * * *
-If you have any other questions regarding the use of this library, please contact us for support at info@cleveroad.com (email subject: "Android loading animation view. Support request.") 
+If you have any other questions regarding the use of this library, please contact us for support at info@cleveroad.com (email subject: "Audio Widget Overlay View. Support request.") 
 
 <br />
 #### License ####
