@@ -1,7 +1,23 @@
-# Audio Widget Overlay View #
+# Audio Widget Overlay View [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome) <img src="https://www.cleveroad.com/public/comercial/label-android.svg" height="19"> <a href="https://www.cleveroad.com/?utm_source=github&utm_medium=label&utm_campaign=contacts"><img src="https://www.cleveroad.com/public/comercial/label-cleveroad.svg" height="19"></a>
+![Header image](/images/header.jpg)
 
-![Demo image](https://trello-attachments.s3.amazonaws.com/56c1a2d7384163114caddfe6/800x600/758bbb56f5c0ad476a06b581fbf4d419/Untitled-2.gif)
+## Meet the Audio Widget Overlay View by Cleveroad
 
+You know, guys, we have become a bit obsessed with music recently. See yourself by checking our previous work on the Audio Visualization View library. Since we wanted to create a companion to our equalizer and add to the collection of Android widgets, the idea to develop a nice and convenient audio widget was born almost immediately. So if you have already developed a music player and you feel that you want to make it even better, then you’re welcome to use our library and enjoy the results. 
+
+![Demo image](/images/demo_.gif)
+
+###### Also you can watch the animation of the <strong><a href="https://youtu.be/4qehnkTR8z8?list=PLi-FH7__aeiydOwY_1q5I8P2EUSseqUCj">Audio Widget Overlay on YouTube</a></strong> in HD quality.
+
+Our invention can facilitate the user’s interaction with a music player and nicely decorate his device screen. Moreover, it’s really easy to integrate! Read our <strong><a href="https://www.cleveroad.com/blog/case-study-audio-widget-overlay-view-by-cleveroad">Case Study: Audio Widget Overlay View by Cleveroad</a></strong> to ensure that and find more of useful information.
+
+<br/>
+
+[![Article image](/images/article.jpg)](https://www.cleveroad.com/blog/case-study-audio-widget-overlay-view-by-cleveroad)
+<br/><br/>
+[![Awesome](/images/logo-footer.png)](https://www.cleveroad.com/?utm_source=github&utm_medium=label&utm_campaign=contacts)
+<br/>
+## Setup and usage
 To use Audio Widget Overlay first add dependency to your project:
  
 ```groovy
@@ -140,14 +156,6 @@ But make sure that your app has permission to draw over another apps in Android 
 #### Support ####
 * * *
 If you have any other questions regarding the use of this library, please contact us for support at info@cleveroad.com (email subject: "Android loading animation view. Support request.") 
-or 
-
-Use our contacts: 
-
-* [Official site](https://www.cleveroad.com/?utm_source=github&utm_medium=link&utm_campaign=contacts)
-* [Facebook account](https://www.facebook.com/cleveroadinc)
-* [Twitter account](https://twitter.com/CleveroadInc)
-* [Google+ account](https://plus.google.com/+CleveroadInc/)
 
 <br />
 #### License ####
