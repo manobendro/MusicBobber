@@ -11,7 +11,6 @@ You know, guys, we have become a bit obsessed with music recently. See yourself 
 
 Our invention can facilitate the user’s interaction with a music player and nicely decorate his device screen. Moreover, it’s really easy to integrate! Read our <strong><a href="https://www.cleveroad.com/blog/case-study-audio-widget-overlay-view-by-cleveroad">Case Study: Audio Widget Overlay View by Cleveroad</a></strong> to ensure that and find more of useful information.
 
-<br/>
 
 [![Article image](/images/article.jpg)](https://www.cleveroad.com/blog/case-study-audio-widget-overlay-view-by-cleveroad)
 <br/><br/>
