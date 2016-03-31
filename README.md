@@ -5,7 +5,7 @@
 
 You know, guys, we have become a bit obsessed with music recently. See yourself by checking our previous work on the Audio Visualization View library. Since we wanted to create a companion to our equalizer and add to the collection of Android widgets, the idea to develop a nice and convenient audio widget was born almost immediately. So if you have already developed a music player and you feel that you want to make it even better, then you’re welcome to use our library and enjoy the results. 
 
-![Demo image](/images/demo_.gif)
+![Demo image](/images/demo.gif)
 
 ###### Also you can watch the animation of the <strong><a href="https://youtu.be/4qehnkTR8z8?list=PLi-FH7__aeiydOwY_1q5I8P2EUSseqUCj">Audio Widget Overlay on YouTube</a></strong> in HD quality.
 
