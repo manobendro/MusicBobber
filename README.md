@@ -1,5 +1,5 @@
 # Audio Widget Overlay View [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome) <img src="https://www.cleveroad.com/public/comercial/label-android.svg" height="19"> <a href="https://www.cleveroad.com/?utm_source=github&utm_medium=label&utm_campaign=contacts"><img src="https://www.cleveroad.com/public/comercial/label-cleveroad.svg" height="19"></a>
-![Header image](/images/header.jpg)
+![Header image](/images/header_.jpg)
 
 ## Meet the Audio Widget Overlay View by Cleveroad
 
@@ -154,7 +154,7 @@ But make sure that your app has permission to draw over another apps in Android 
 <br />
 #### Support ####
 * * *
-If you have any other questions regarding the use of this library, please contact us for support at info@cleveroad.com (email subject: "Android loading animation view. Support request.") 
+If you have any other questions regarding the use of this library, please contact us for support at info@cleveroad.com (email subject: "Audio Widget Overlay View. Support request.") 
 
 <br />
 #### License ####
