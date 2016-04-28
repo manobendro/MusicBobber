@@ -344,7 +344,11 @@ public class AudioWidget {
         float remWidX = screenSize.x / 2 - radius;
         hiddenRemWidY = screenSize.y + widgetHeight + navigationBarHeight();
         visibleRemWidY = screenSize.y - radius - (hasNavigationBar() ? 0 : widgetHeight);
-        show(removeWidgetView, (int) remWidX, (int) hiddenRemWidY);
+        try {
+            show(removeWidgetView, (int) remWidX, (int) hiddenRemWidY);
+        } catch (IllegalArgumentException e) {
+            // widget not removed yet, animation in progress
+        }
         show(playPauseButton, (int) (cx - widgetHeight), (int) (cy - widgetHeight));
         playPauseButtonManager.animateToBounds();
     }
@@ -353,12 +357,19 @@ public class AudioWidget {
      * Hide widget.
      */
     public void hide() {
+        hideInternal(true);
+    }
+
+    private void hideInternal(boolean byPublic) {
         if (!shown) {
             return;
         }
         shown = false;
         released = true;
         windowManager.removeView(playPauseButton);
+        if (byPublic) {
+            windowManager.removeView(removeWidgetView);
+        }
         try {
             windowManager.removeView(expandCollapseWidget);
         } catch (IllegalArgumentException e) {
@@ -581,7 +592,7 @@ public class AudioWidget {
                 animator.start();
             }
             if (isReadyToRemove()) {
-                hide();
+                hideInternal(false);
             } else {
                 if (onWidgetStateChangedListener != null) {
                     WindowManager.LayoutParams params = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();

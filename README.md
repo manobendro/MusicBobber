@@ -21,7 +21,7 @@ To use Audio Widget Overlay first add dependency to your project:
  
 ```groovy
 dependencies {
-    compile 'com.cleveroad:audiowidget:0.9.0'
+    compile 'com.cleveroad:audiowidget:0.9.1'
 }
 ```
 This library will add two new permissions to your manifest:
