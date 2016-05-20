@@ -1,12 +1,15 @@
 package com.cleveroad.audiowidget;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.FloatEvaluator;
 import android.animation.IntEvaluator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +35,7 @@ class TouchManager implements View.OnTouchListener {
     private int screenWidth;
     private int screenHeight;
     private Float lastRawX, lastRawY;
+    private boolean touchCanceled;
 
     public TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
         this.gestureDetector = new GestureDetector(view.getContext(), gestureListener = new GestureListener());
@@ -64,13 +68,22 @@ class TouchManager implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(@NonNull View v, @NonNull MotionEvent event) {
-        boolean res = gestureDetector.onTouchEvent(event);
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            gestureListener.onUpEvent(event);
+        boolean res = (!touchCanceled || event.getAction() == MotionEvent.ACTION_UP) && gestureDetector.onTouchEvent(event);
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            touchCanceled = false;
+        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+            if (!touchCanceled) {
+                gestureListener.onUpEvent(event);
+            }
         } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-            gestureListener.onMove(event);
+            if (!touchCanceled) {
+                gestureListener.onMove(event);
+            }
         } else if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
             gestureListener.onTouchOutsideEvent(event);
+            touchCanceled = false;
+        } else if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+            touchCanceled = true;
         }
         return res;
     }
@@ -239,7 +252,11 @@ class TouchManager implements View.OnTouchListener {
             WindowManager.LayoutParams params = (WindowManager.LayoutParams) view.getLayoutParams();
             params.x = (int) l;
             params.y = (int) t;
-            windowManager.updateViewLayout(view, params);
+            try {
+                windowManager.updateViewLayout(view, params);
+            } catch (IllegalArgumentException e) {
+                // view not attached to window
+            }
             if (callback != null) {
                 callback.onMoved(distanceX, distanceY);
             }
@@ -251,7 +268,21 @@ class TouchManager implements View.OnTouchListener {
             if (callback != null) {
                 callback.onLongClick(e.getX(), e.getY());
             }
-            onUpEvent(e);
+            long downTime = SystemClock.uptimeMillis();
+            long eventTime = SystemClock.uptimeMillis() + 100;
+            float x = 0.0f;
+            float y = 0.0f;
+            int metaState = 0;
+            MotionEvent event = MotionEvent.obtain(
+                    downTime,
+                    eventTime,
+                    MotionEvent.ACTION_CANCEL,
+                    x,
+                    y,
+                    metaState
+            );
+            view.dispatchTouchEvent(event);
+//            onUpEvent(e);
         }
 
         @Override
@@ -328,10 +359,10 @@ class TouchManager implements View.OnTouchListener {
                 try {
                     windowManager.updateViewLayout(view, params);
                 } catch (IllegalArgumentException e) {
-                    velocityAnimator.cancel();
+                    animation.cancel();
                 }
             });
-            velocityAnimator.addListener(new SimpleAnimatorListener() {
+            velocityAnimator.addListener(new AnimatorListenerAdapter() {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
@@ -393,10 +424,11 @@ class TouchManager implements View.OnTouchListener {
                 try {
                     windowManager.updateViewLayout(view, params);
                 } catch (IllegalArgumentException e) {
-                    edgeAnimator.cancel();
+                    // view not attached to window
+                    animation.cancel();
                 }
             });
-            edgeAnimator.addListener(new SimpleAnimatorListener() {
+            edgeAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
@@ -407,7 +439,11 @@ class TouchManager implements View.OnTouchListener {
             });
         }
 
-        public void animate(BoundsChecker boundsChecker) {
+        private void animate(BoundsChecker boundsChecker) {
+            animate(boundsChecker, null);
+        }
+
+        public void animate(BoundsChecker boundsChecker, @Nullable Runnable afterAnimation) {
             if (edgeAnimator.isRunning())
                 return;
             params = (WindowManager.LayoutParams) view.getLayoutParams();
@@ -431,6 +467,25 @@ class TouchManager implements View.OnTouchListener {
             }
             dxHolder.setIntValues(params.x, x);
             dyHolder.setIntValues(params.y, y);
+            edgeAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    super.onAnimationCancel(animation);
+                    edgeAnimator.removeListener(this);
+                    if (afterAnimation != null) {
+                        afterAnimation.run();
+                    }
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    edgeAnimator.removeListener(this);
+                    if (afterAnimation != null) {
+                        afterAnimation.run();
+                    }
+                }
+            });
             edgeAnimator.start();
         }
 
@@ -439,11 +494,11 @@ class TouchManager implements View.OnTouchListener {
         }
     }
 
-    void animateToBounds(BoundsChecker boundsChecker) {
-        stickyEdgeAnimator.animate(boundsChecker);
+    void animateToBounds(BoundsChecker boundsChecker, @Nullable Runnable afterAnimation) {
+        stickyEdgeAnimator.animate(boundsChecker, afterAnimation);
     }
 
     void animateToBounds() {
-        stickyEdgeAnimator.animate(boundsChecker);
+        stickyEdgeAnimator.animate(boundsChecker, null);
     }
 }

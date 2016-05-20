@@ -13,6 +13,7 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -38,6 +39,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private static final long UPDATE_INTERVAL = 1000;
     private static final String KEY_POSITION_X = "position_x";
     private static final String KEY_POSITION_Y = "position_y";
+    public static final String EXTRA_CHANGE_STATE = "EXTRA_CHANGE_STATE";
 
     private AudioWidget audioWidget;
     private MediaPlayer mediaPlayer;
@@ -90,10 +92,16 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 addNewTracks(intent);
             } else if (intent.hasExtra(EXTRA_SELECT_TRACK)) {
                 selectNewTrack(intent);
+            } else if (intent.hasExtra(EXTRA_CHANGE_STATE)) {
+                boolean show = intent.getBooleanExtra(EXTRA_CHANGE_STATE, false);
+                if (show) {
+                    audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
+                } else {
+                    audioWidget.hide();
+                }
             }
-            return START_STICKY;
         }
-        return super.onStartCommand(null, flags, startId);
+        return START_STICKY;
     }
 
     private void selectNewTrack(Intent intent) {
@@ -235,7 +243,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-        return true;
+        return false;
+    }
+
+    @Override
+    public void onPlaylistLongClicked() {
+        Log.d("TEST", "playlist long clicked");
     }
 
     @Override
@@ -247,6 +260,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             playingIndex = items.size() - 1;
         }
         startCurrentTrack();
+    }
+
+    @Override
+    public void onPreviousLongClicked() {
+        Log.d("TEST", "previous long clicked");
     }
 
     @Override
@@ -262,7 +280,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             mediaPlayer.start();
             paused = false;
         }
-        return true;
+        return false;
+    }
+
+    @Override
+    public void onPlayPauseLongClicked() {
+        Log.d("TEST", "play/pause long clicked");
     }
 
     @Override
@@ -277,8 +300,18 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     @Override
-    public void onAlbumClicked() {
+    public void onNextLongClicked() {
+        Log.d("TEST", "next long clicked");
+    }
 
+    @Override
+    public void onAlbumClicked() {
+        Log.d("TEST", "album clicked");
+    }
+
+    @Override
+    public void onAlbumLongClicked() {
+        Log.d("TEST", "album long clicked");
     }
 
     private void startTrackingPosition() {
@@ -306,7 +339,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onWidgetStateChanged(@NonNull AudioWidget.State state) {
         if (state == AudioWidget.State.REMOVED) {
-            stopSelf();
+//            stopSelf();
         }
     }
 

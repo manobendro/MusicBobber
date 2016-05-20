@@ -27,8 +27,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.cleveroad.audiowidget.VersionUtil;
-
 import java.util.Collection;
 
 import butterknife.Bind;
@@ -60,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         recyclerView.setAdapter(adapter);
         emptyViewObserver = new EmptyViewObserver(emptyView);
         emptyViewObserver.bind(recyclerView);
-        MusicFilter filter = new MusicFilter(VersionUtil.color(this, R.color.colorAccent));
+        MusicFilter filter = new MusicFilter(ContextCompat.getColor(this, R.color.colorAccent));
         adapter.withFilter(filter);
         ItemClickSupport.addTo(recyclerView)
                 .setOnItemClickListener(new ItemClickSupport.OnItemClickListener() {
@@ -126,6 +124,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
             onPermissionsNotGranted();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intent = new Intent(this, MusicService.class);
+        intent.putExtra(MusicService.EXTRA_CHANGE_STATE, false);
+        startService(intent);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Intent intent = new Intent(this, MusicService.class);
+        intent.putExtra(MusicService.EXTRA_CHANGE_STATE, true);
+        startService(intent);
     }
 
     /**
