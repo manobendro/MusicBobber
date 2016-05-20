@@ -1221,7 +1221,7 @@ public class AudioWidget {
 
         /**
          * Called when playlist button clicked.
-         * @return true if you consumed action, false to collapse widget
+         * @return true if you consume the action, false to use default behavior (collapse widget)
          */
         boolean onPlaylistClicked();
 
@@ -1242,6 +1242,7 @@ public class AudioWidget {
 
         /**
          * Called when play/pause button clicked.
+         * @return true if you consume the action, false to use default behavior (change play/pause state)
          */
         boolean onPlayPauseClicked();
 

@@ -338,9 +338,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onWidgetStateChanged(@NonNull AudioWidget.State state) {
-        if (state == AudioWidget.State.REMOVED) {
-//            stopSelf();
-        }
+
     }
 
     @Override
