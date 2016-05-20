@@ -21,7 +21,7 @@ To use Audio Widget Overlay first add dependency to your project:
  
 ```groovy
 dependencies {
-    compile 'com.cleveroad:audiowidget:0.9.1'
+    compile 'com.cleveroad:audiowidget:0.9.2'
 }
 ```
 This library will add two new permissions to your manifest:
@@ -78,7 +78,7 @@ audioWidget.controller().onControlsClickListener(new AudioWidget.OnControlsClick
     @Override
     public boolean onPlaylistClicked() {
         // playlist icon clicked
-        // return true to collapse widget, false to stay in expanded state
+        // return false to collapse widget, true to stay in expanded state
     }
 
     @Override
@@ -100,6 +100,36 @@ audioWidget.controller().onControlsClickListener(new AudioWidget.OnControlsClick
     @Override
     public void onAlbumClicked() {
         // album cover clicked
+    }
+    
+    @Override
+    public void onPlaylistLongClicked() {
+        // playlist button long clicked
+    }
+    
+    @Override
+    public void onPreviousLongClicked() {
+        // previous track button long clicked
+    }
+    
+    @Override
+    public void onPlayPauseLongClicked() {
+        // play/pause button long clicked
+    }
+    
+    @Override
+    public void onNextLongClicked() {
+        // next track button long clicked
+    }
+
+    @Override
+    public void onAlbumClicked() {
+        // album cover long clicked
+    }
+
+    @Override
+    public void onAlbumLongClicked() {
+        // album cover long clicked
     }
 });
 
@@ -150,6 +180,11 @@ But make sure that your app has permission to draw over another apps in Android 
     
     ...
 ```
+
+#### Migration from v.0.9.1 to v.0.9.2
+* **OnControlsClickListener.onPlaylistClicked** should return `true` to consume the action or `false` to use default behavior (collapse the widget)
+* **OnControlsClickListener.onPlayPauseClicked** should return `true` to consume the action or `false` to use default behavior (change play/pause state)
+
 
 <br />
 #### Support ####

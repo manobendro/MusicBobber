@@ -1,6 +1,7 @@
 package com.cleveroad.audiowidget;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
@@ -153,7 +154,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			updateExpandAnimation(position);
 			invalidate();
 		});
-		this.expandAnimator.addListener(new SimpleAnimatorListener() {
+		this.expandAnimator.addListener(new AnimatorListenerAdapter() {
 			@Override
 			public void onAnimationStart(Animator animation) {
 				super.onAnimationStart(animation);
@@ -183,7 +184,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 			updateCollapseAnimation(position);
 			invalidate();
 		});
-		this.collapseAnimator.addListener(new SimpleAnimatorListener() {
+		this.collapseAnimator.addListener(new AnimatorListenerAdapter() {
 			@Override
 			public void onAnimationStart(Animator animation) {
 				super.onAnimationStart(animation);
@@ -234,7 +235,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
             bubblesPaint.setAlpha((int) DrawableUtils.customFunction(bubblesTime, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
             invalidate();
         });
-        bubblesTouchAnimator.addListener(new SimpleAnimatorListener() {
+        bubblesTouchAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
@@ -508,6 +509,48 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		}
 	}
 
+    public void onLongClick(float x, float y) {
+        if (isAnimationInProgress())
+            return;
+        int index = getTouchedAreaIndex((int) x, (int) y);
+        switch (index) {
+            case INDEX_PLAYLIST: {
+                if (onControlsClickListener != null) {
+                    onControlsClickListener.onPlaylistLongClicked();
+                }
+                break;
+            }
+            case INDEX_PREV: {
+                if (onControlsClickListener != null) {
+                    onControlsClickListener.onPreviousLongClicked();
+                }
+                break;
+            }
+            case INDEX_PLAY: {
+                if (onControlsClickListener != null) {
+                    onControlsClickListener.onPlayPauseLongClicked();
+                }
+                break;
+            }
+            case INDEX_NEXT: {
+                if (onControlsClickListener != null) {
+                    onControlsClickListener.onNextLongClicked();
+                }
+                break;
+            }
+            case INDEX_ALBUM: {
+                if (onControlsClickListener != null) {
+                    onControlsClickListener.onAlbumLongClicked();
+                }
+                break;
+            }
+            default: {
+                Log.w(ExpandCollapseWidget.class.getSimpleName(), "Unknown index: " + index);
+                break;
+            }
+        }
+    }
+
     private int getTouchedAreaIndex(int x, int y) {
         int index = -1;
         for (int i = 0; i < buttonBounds.length; i++) {
@@ -521,8 +564,9 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
     }
 
     public void expand(int expandDirection) {
-		if (expanded)
-			return;
+		if (expanded) {
+            return;
+        }
 		this.expandDirection = expandDirection;
 		startExpandAnimation();
 	}

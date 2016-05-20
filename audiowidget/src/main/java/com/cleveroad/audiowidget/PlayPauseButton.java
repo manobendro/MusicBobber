@@ -1,6 +1,7 @@
 package com.cleveroad.audiowidget;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
@@ -112,7 +113,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 			updateBubblesPosition(position, fraction);
 			invalidate();
 		});
-		this.bubblesAnimator.addListener(new SimpleAnimatorListener() {
+		this.bubblesAnimator.addListener(new AnimatorListenerAdapter() {
 
 			@Override
 			public void onAnimationStart(Animator animation) {

@@ -4,13 +4,12 @@ import android.content.Context;
 import android.database.DataSetObserver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.widget.Filter;
-
-import com.cleveroad.audiowidget.VersionUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +28,7 @@ abstract class BaseFilter<T> extends Filter {
     private int highlightColor;
 
     public BaseFilter(@NonNull Context context) throws AssertionError {
-        highlightColor = VersionUtil.color(context, R.color.colorAccent);
+        highlightColor = ContextCompat.getColor(context, R.color.colorAccent);
     }
 
     public BaseFilter(int highlightColor) throws AssertionError {
