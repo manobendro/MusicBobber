@@ -49,9 +49,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private EmptyViewObserver emptyViewObserver;
 
     @Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         adapter = new MusicAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             return;
         }
         checkReadStoragePermission();
-	}
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -147,13 +147,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void checkReadStoragePermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)  != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, EXT_STORAGE_PERMISSION_REQ_CODE);
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, EXT_STORAGE_PERMISSION_REQ_CODE);
                         } else if (which == DialogInterface.BUTTON_NEGATIVE) {
                             onPermissionsNotGranted();
                         }
@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         .show();
                 return;
             }
-            ActivityCompat.requestPermissions(MainActivity.this, new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, EXT_STORAGE_PERMISSION_REQ_CODE);
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, EXT_STORAGE_PERMISSION_REQ_CODE);
             return;
         }
         loadMusic();
@@ -240,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     /**
      * Check if service is running.
+     *
      * @param serviceClass
      * @return
      */

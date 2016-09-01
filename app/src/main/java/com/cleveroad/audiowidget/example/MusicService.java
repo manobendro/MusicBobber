@@ -8,9 +8,11 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -34,18 +36,18 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioWidget.OnControlsClickListener, AudioWidget.OnWidgetStateChangedListener {
 
+    public static final String EXTRA_CHANGE_STATE = "EXTRA_CHANGE_STATE";
     private static final String EXTRA_FILE_URIS = "EXTRA_FILE_URIS";
     private static final String EXTRA_SELECT_TRACK = "EXTRA_SELECT_TRACK";
     private static final long UPDATE_INTERVAL = 1000;
     private static final String KEY_POSITION_X = "position_x";
     private static final String KEY_POSITION_Y = "position_y";
-    public static final String EXTRA_CHANGE_STATE = "EXTRA_CHANGE_STATE";
-
+    private static MusicItem[] tracks;
+    private final List<MusicItem> items = new ArrayList<>();
     private AudioWidget audioWidget;
     private MediaPlayer mediaPlayer;
     private boolean preparing;
     private int playingIndex = -1;
-    private final List<MusicItem> items = new ArrayList<>();
     private boolean paused;
     private Timer timer;
     private CropCircleTransformation cropCircleTransformation;
@@ -54,7 +56,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     public static void setTracks(@NonNull Context context, @NonNull MusicItem[] tracks) {
         Intent intent = new Intent(context, MusicService.class);
-        intent.putExtra(EXTRA_FILE_URIS, tracks);
+        MusicService.tracks = tracks;
+        intent.putExtra(EXTRA_FILE_URIS, 1); //TODO: remove it
         context.startService(intent);
     }
 
@@ -93,11 +96,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             } else if (intent.hasExtra(EXTRA_SELECT_TRACK)) {
                 selectNewTrack(intent);
             } else if (intent.hasExtra(EXTRA_CHANGE_STATE)) {
-                boolean show = intent.getBooleanExtra(EXTRA_CHANGE_STATE, false);
-                if (show) {
-                    audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
-                } else {
-                    audioWidget.hide();
+                if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this))) {
+                    boolean show = intent.getBooleanExtra(EXTRA_CHANGE_STATE, false);
+                    if (show) {
+                        audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
+                    } else {
+                        audioWidget.hide();
+                    }
                 }
             }
         }
@@ -129,6 +134,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             paused = false;
         }
         mediaPlayer.reset();
+        if (playingIndex < 0) {
+            return;
+        }
         try {
             mediaPlayer.setDataSource(this, items.get(playingIndex).fileUri());
             mediaPlayer.prepareAsync();
@@ -143,7 +151,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         if (playingIndex != -1)
             playingItem = items.get(playingIndex);
         items.clear();
-        Parcelable[] items = intent.getParcelableArrayExtra(EXTRA_FILE_URIS);
+        Parcelable[] items = MusicService.tracks;
         for (Parcelable item : items) {
             if (item instanceof MusicItem)
                 this.items.add((MusicItem) item);
