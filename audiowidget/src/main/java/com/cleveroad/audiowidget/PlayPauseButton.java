@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 
@@ -29,7 +30,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private static final int TOTAL_BUBBLES_COUNT = (int) (360 / BUBBLES_ANGLE_STEP);
 	static final long PROGRESS_CHANGES_DURATION = (long) (6 * Configuration.FRAME_SPEED);
     private static final long PROGRESS_STEP_DURATION = (long) (3 * Configuration.FRAME_SPEED);
+	private static final int ALBUM_COVER_PLACEHOLDER_ALPHA = 100;
 
+	private final Paint albumPlaceholderPaint;
     private final Paint buttonPaint;
 	private final Paint bubblesPaint;
 	private final Paint progressPaint;
@@ -60,6 +63,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 	private float animatedProgress = 0;
 	private boolean progressChangesEnabled;
 
+	@Nullable
+	private Drawable albumCover;
+
     public PlayPauseButton(@NonNull Configuration configuration) {
 		super(configuration.context());
 		setLayerType(LAYER_TYPE_SOFTWARE, null);
@@ -84,6 +90,11 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		this.progressPaint.setStyle(Paint.Style.STROKE);
 		this.progressPaint.setStrokeWidth(configuration.progressStrokeWidth());
 		this.progressPaint.setColor(configuration.progressColor());
+		this.albumPlaceholderPaint = new Paint();
+		this.albumPlaceholderPaint.setStyle(Paint.Style.FILL);
+		this.albumPlaceholderPaint.setColor(configuration.lightColor());
+		this.albumPlaceholderPaint.setAntiAlias(true);
+		this.albumPlaceholderPaint.setAlpha(ALBUM_COVER_PLACEHOLDER_ALPHA);
 		this.pausedColor = configuration.lightColor();
 		this.playingColor = configuration.darkColor();
 		this.radius = configuration.radius();
@@ -236,7 +247,13 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
             }
 		}
 
-		canvas.drawCircle(cx, cy, radius, buttonPaint);
+		if(albumCover == null) {
+			canvas.drawCircle(cx, cy, radius, buttonPaint);
+		} else {
+			albumCover.setBounds((int) (cx - radius), (int) (cy - radius), (int) (cx + radius), (int) (cy + radius));
+			albumCover.draw(canvas);
+			canvas.drawCircle(cx, cy, radius, albumPlaceholderPaint);
+		}
 		float padding = progressPaint.getStrokeWidth() / 2f;
 		bounds.set(cx - radius + padding, cy - radius + padding, cx + radius - padding, cy + radius - padding);
 		canvas.drawArc(bounds, -90, animatedProgress, false, progressPaint);
@@ -319,6 +336,23 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
     public TouchManager.BoundsChecker newBoundsChecker(int offsetX, int offsetY) {
         return new BoundsCheckerImpl(radius, offsetX, offsetY);
     }
+
+	public void albumCover(Drawable albumCover) {
+		if(albumCover == null && this.albumCover != null) {
+			this.albumCover = null;
+			postInvalidate();
+		} else {
+			if (this.albumCover == albumCover) {
+				return;
+			}
+			if (albumCover.getConstantState() != null) {
+				this.albumCover = albumCover.getConstantState().newDrawable().mutate();
+			} else {
+				this.albumCover = albumCover;
+			}
+			postInvalidate();
+		}
+	}
 
 	private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {
 

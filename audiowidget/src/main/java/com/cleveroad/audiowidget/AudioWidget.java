@@ -324,14 +324,19 @@ public class AudioWidget {
             @Override
             public void albumCover(@Nullable Drawable albumCover) {
                 expandCollapseWidget.albumCover(albumCover);
+                playPauseButton.albumCover(albumCover);
             }
 
             @Override
             public void albumCoverBitmap(@Nullable Bitmap bitmap) {
-                if (bitmap == null)
+                if (bitmap == null) {
                     expandCollapseWidget.albumCover(null);
-                else
-                    expandCollapseWidget.albumCover(new BitmapDrawable(context.getResources(), bitmap));
+                    playPauseButton.albumCover(null);
+                } else {
+                    Drawable albumCover = new BitmapDrawable(context.getResources(), bitmap);
+                    expandCollapseWidget.albumCover(albumCover);
+                    playPauseButton.albumCover(albumCover);
+                }
             }
         };
     }
