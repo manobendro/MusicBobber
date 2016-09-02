@@ -129,17 +129,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onResume() {
         super.onResume();
-        Intent intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_CHANGE_STATE, false);
-        startService(intent);
+        MusicService.setState(this, false);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Intent intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_CHANGE_STATE, true);
-        startService(intent);
+        MusicService.setState(this, true);
     }
 
     /**

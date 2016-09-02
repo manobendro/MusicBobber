@@ -8,9 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -22,6 +23,7 @@ import com.cleveroad.audiowidget.AudioWidget;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -34,18 +36,20 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioWidget.OnControlsClickListener, AudioWidget.OnWidgetStateChangedListener {
 
-    private static final String EXTRA_FILE_URIS = "EXTRA_FILE_URIS";
+    private static final String ACTION_SET_TRACKS = "ACTION_SET_TRACKS";
+    private static final String ACTION_PLAY_TRACKS = "ACTION_PLAY_TRACKS";
+    private static final String ACTION_CHANGE_STATE = "ACTION_CHANGE_STATE";
+    private static final String EXTRA_CHANGE_STATE = "EXTRA_CHANGE_STATE";
     private static final String EXTRA_SELECT_TRACK = "EXTRA_SELECT_TRACK";
     private static final long UPDATE_INTERVAL = 1000;
     private static final String KEY_POSITION_X = "position_x";
     private static final String KEY_POSITION_Y = "position_y";
-    public static final String EXTRA_CHANGE_STATE = "EXTRA_CHANGE_STATE";
-
+    private static MusicItem[] tracks;
+    private final List<MusicItem> items = new ArrayList<>();
     private AudioWidget audioWidget;
     private MediaPlayer mediaPlayer;
     private boolean preparing;
     private int playingIndex = -1;
-    private final List<MusicItem> items = new ArrayList<>();
     private boolean paused;
     private Timer timer;
     private CropCircleTransformation cropCircleTransformation;
@@ -53,14 +57,20 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 
     public static void setTracks(@NonNull Context context, @NonNull MusicItem[] tracks) {
-        Intent intent = new Intent(context, MusicService.class);
-        intent.putExtra(EXTRA_FILE_URIS, tracks);
+        Intent intent = new Intent(ACTION_SET_TRACKS, null, context, MusicService.class);
+        MusicService.tracks = tracks;
         context.startService(intent);
     }
 
     public static void playTrack(@NonNull Context context, @NonNull MusicItem item) {
-        Intent intent = new Intent(context, MusicService.class);
+        Intent intent = new Intent(ACTION_PLAY_TRACKS, null, context, MusicService.class);
         intent.putExtra(EXTRA_SELECT_TRACK, item);
+        context.startService(intent);
+    }
+
+    public static void setState(@NonNull Context context, boolean isShowing) {
+        Intent intent = new Intent(ACTION_CHANGE_STATE, null, context, MusicService.class);
+        intent.putExtra(EXTRA_CHANGE_STATE, isShowing);
         context.startService(intent);
     }
 
@@ -87,17 +97,26 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-            if (intent.hasExtra(EXTRA_FILE_URIS)) {
-                addNewTracks(intent);
-            } else if (intent.hasExtra(EXTRA_SELECT_TRACK)) {
-                selectNewTrack(intent);
-            } else if (intent.hasExtra(EXTRA_CHANGE_STATE)) {
-                boolean show = intent.getBooleanExtra(EXTRA_CHANGE_STATE, false);
-                if (show) {
-                    audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
-                } else {
-                    audioWidget.hide();
+        if (intent != null && intent.getAction() != null) {
+            switch (intent.getAction()) {
+                case ACTION_SET_TRACKS: {
+                    updateTracks();
+                    break;
+                }
+                case ACTION_PLAY_TRACKS: {
+                    selectNewTrack(intent);
+                    break;
+                }
+                case ACTION_CHANGE_STATE: {
+                    if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this))) {
+                        boolean show = intent.getBooleanExtra(EXTRA_CHANGE_STATE, false);
+                        if (show) {
+                            audioWidget.show(preferences.getInt(KEY_POSITION_X, 100), preferences.getInt(KEY_POSITION_Y, 100));
+                        } else {
+                            audioWidget.hide();
+                        }
+                    }
+                    break;
                 }
             }
         }
@@ -129,6 +148,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             paused = false;
         }
         mediaPlayer.reset();
+        if (playingIndex < 0) {
+            return;
+        }
         try {
             mediaPlayer.setDataSource(this, items.get(playingIndex).fileUri());
             mediaPlayer.prepareAsync();
@@ -138,16 +160,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
     }
 
-    private void addNewTracks(Intent intent) {
+    private void updateTracks() {
         MusicItem playingItem = null;
         if (playingIndex != -1)
             playingItem = items.get(playingIndex);
         items.clear();
-        Parcelable[] items = intent.getParcelableArrayExtra(EXTRA_FILE_URIS);
-        for (Parcelable item : items) {
-            if (item instanceof MusicItem)
-                this.items.add((MusicItem) item);
-        }
+        items.addAll(Arrays.asList(MusicService.tracks));
         if (playingItem == null) {
             playingIndex = -1;
         } else {
