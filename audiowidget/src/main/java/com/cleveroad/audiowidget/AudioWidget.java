@@ -355,7 +355,7 @@ public class AudioWidget {
             return;
         }
         shown = true;
-        float remWidX = screenSize.x / 2 - radius * RemoveWidgetView.SCALE_LARGE;
+        float remWidX = screenSize.x / 2f - radius * RemoveWidgetView.SCALE_LARGE;
         hiddenRemWidPos.set((int)remWidX, (int) (screenSize.y + widgetHeight + navigationBarHeight()));
         visibleRemWidPos.set((int)remWidX, (int) (screenSize.y - radius - (hasNavigationBar() ? 0 : widgetHeight)));
         try {
@@ -612,7 +612,8 @@ public class AudioWidget {
             double tgAlpha = (screenSize.x / 2. - playPauseBtnParams.x) / (visibleRemWidPos.y - playPauseBtnParams.y);
             double rotationDegrees = 360 - Math.toDegrees(Math.atan(tgAlpha));
 
-            float distance = (float) Math.sqrt(Math.pow(animatedRemBtnYPos - playPauseBtnParams.y, 2) + Math.pow(visibleRemWidPos.x - hiddenRemWidPos.x, 2));
+            float distance = (float) Math.sqrt(Math.pow(animatedRemBtnYPos - playPauseBtnParams.y, 2) +
+                            Math.pow(visibleRemWidPos.x - hiddenRemWidPos.x, 2));
             float maxDistance = (float) Math.sqrt(Math.pow(screenSize.x, 2) + Math.pow(screenSize.y, 2));
             distance /= maxDistance;
 
@@ -620,8 +621,12 @@ public class AudioWidget {
                 animatedRemBtnYPos = visibleRemWidPos.y;
             }
             try {
-                removeBtnParams.x = (int) DrawableUtils.rotateX(visibleRemWidPos.x, animatedRemBtnYPos - radius * distance, hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
-                removeBtnParams.y = (int) DrawableUtils.rotateY(visibleRemWidPos.x, animatedRemBtnYPos - radius * distance, hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
+                removeBtnParams.x = (int) DrawableUtils.rotateX(
+                        visibleRemWidPos.x, animatedRemBtnYPos - radius * distance,
+                        hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
+                removeBtnParams.y = (int) DrawableUtils.rotateY(
+                        visibleRemWidPos.x, animatedRemBtnYPos - radius * distance,
+                        hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
                 windowManager.updateViewLayout(removeWidgetView, removeBtnParams);
             } catch (IllegalArgumentException e) {
                 // view not attached to window

@@ -36,8 +36,11 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioWidget.OnControlsClickListener, AudioWidget.OnWidgetStateChangedListener {
 
-    private static final String EXTRA_FILE_URIS = "EXTRA_FILE_URIS";
+    private static final String ACTION_SET_TRACKS = "ACTION_SET_TRACKS";
+    private static final String ACTION_PLAY_TRACKS = "ACTION_PLAY_TRACKS";
+    private static final String ACTION_CHANGE_STATE = "ACTION_CHANGE_STATE";
     private static final String EXTRA_SELECT_TRACK = "EXTRA_SELECT_TRACK";
+    private static final String EXTRA_CHANGE_STATE = "EXTRA_CHANGE_STATE";
     private static final long UPDATE_INTERVAL = 1000;
     private static final String KEY_POSITION_X = "position_x";
     private static final String KEY_POSITION_Y = "position_y";

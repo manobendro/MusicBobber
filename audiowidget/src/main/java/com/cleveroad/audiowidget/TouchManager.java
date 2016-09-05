@@ -381,8 +381,9 @@ class TouchManager implements View.OnTouchListener {
         }
 
         public void animate(float velocityX, float velocityY) {
-            if (isAnimating())
+            if (isAnimating()) {
                 return;
+            }
             params = (WindowManager.LayoutParams) view.getLayoutParams();
             dxHolder.setFloatValues(velocityX, 0);
             dyHolder.setFloatValues(velocityY, 0);
