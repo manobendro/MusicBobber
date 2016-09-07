@@ -607,8 +607,9 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
     }
 
     private void startCollapseAnimation() {
-		if (isAnimationInProgress())
+		if (isAnimationInProgress()) {
 			return;
+		}
 		collapseAnimator.start();
 	}
 
