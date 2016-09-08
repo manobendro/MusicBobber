@@ -358,7 +358,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 
         private float radius;
 
-        public BoundsCheckerImpl(float radius, int offsetX, int offsetY) {
+        BoundsCheckerImpl(float radius, int offsetX, int offsetY) {
             super(offsetX, offsetY);
             this.radius = radius;
         }

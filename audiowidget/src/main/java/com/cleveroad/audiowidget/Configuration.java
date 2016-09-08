@@ -14,13 +14,13 @@ import java.util.Random;
  */
 class Configuration {
 
-	public static final float FRAME_SPEED = 70.0f;
+	static final float FRAME_SPEED = 70.0f;
 
-	public static final long LONG_CLICK_THRESHOLD = ViewConfiguration.getLongPressTimeout() + 128;
-    public static final int STATE_STOPPED = 0;
-    public static final int STATE_PLAYING = 1;
-    public static final int STATE_PAUSED = 2;
-    public static final long TOUCH_ANIMATION_DURATION = 100;
+	static final long LONG_CLICK_THRESHOLD = ViewConfiguration.getLongPressTimeout() + 128;
+    static final int STATE_STOPPED = 0;
+    static final int STATE_PLAYING = 1;
+    static final int STATE_PAUSED = 2;
+    static final long TOUCH_ANIMATION_DURATION = 100;
 
     private final int lightColor;
 	private final int darkColor;
@@ -82,123 +82,123 @@ class Configuration {
         this.prevNextExtraPadding = builder.prevNextExtraPadding;
 	}
 
-	public Context context() {
+	Context context() {
 		return context;
 	}
 
-	public Random random() {
+	Random random() {
 		return random;
 	}
 
 	@ColorInt
-	public int lightColor() {
+	int lightColor() {
 		return lightColor;
 	}
 
 	@ColorInt
-	public int darkColor() {
+	int darkColor() {
 		return darkColor;
 	}
 
 	@ColorInt
-	public int progressColor() {
+	int progressColor() {
 		return progressColor;
 	}
 
 	@ColorInt
-	public int expandedColor() {
+	int expandedColor() {
 		return expandedColor;
 	}
 
-	public float widgetWidth() {
+	float widgetWidth() {
 		return width;
 	}
 
-	public float radius() {
+	float radius() {
 		return height;
 	}
 
-	public Drawable playDrawable() {
+	Drawable playDrawable() {
 		return playDrawable;
 	}
 
-	public Drawable pauseDrawable() {
+	Drawable pauseDrawable() {
 		return pauseDrawable;
 	}
 
-	public Drawable prevDrawable() {
+	Drawable prevDrawable() {
 		return prevDrawable;
 	}
 
-	public Drawable nextDrawable() {
+	Drawable nextDrawable() {
 		return nextDrawable;
 	}
 
-	public Drawable playlistDrawable() {
+	Drawable playlistDrawable() {
 		return playlistDrawable;
 	}
 
-	public Drawable albumDrawable() {
+	Drawable albumDrawable() {
 		return albumDrawable;
 	}
 
-	public PlaybackState playbackState() {
+	PlaybackState playbackState() {
 		return playbackState;
 	}
 
-    public float crossStrokeWidth() {
+    float crossStrokeWidth() {
         return crossStrokeWidth;
     }
 
-    public float progressStrokeWidth() {
+    float progressStrokeWidth() {
         return progressStrokeWidth;
     }
 
-    public int buttonPadding() {
+    int buttonPadding() {
         return buttonPadding;
     }
 
-    public float shadowRadius() {
+    float shadowRadius() {
         return shadowRadius;
     }
 
-    public float shadowDx() {
+    float shadowDx() {
         return shadowDx;
     }
 
-    public float shadowDy() {
+    float shadowDy() {
         return shadowDy;
     }
 
-    public int shadowColor() {
+    int shadowColor() {
         return shadowColor;
     }
 
-    public float bubblesMinSize() {
+    float bubblesMinSize() {
         return bubblesMinSize;
     }
 
-    public float bubblesMaxSize() {
+    float bubblesMaxSize() {
         return bubblesMaxSize;
     }
 
-    public int crossColor() {
+    int crossColor() {
         return crossColor;
     }
 
-    public int crossOverlappedColor() {
+    int crossOverlappedColor() {
         return crossOverlappedColor;
     }
 
-    public Interpolator accDecInterpolator() {
+    Interpolator accDecInterpolator() {
         return accDecInterpolator;
     }
 
-    public int prevNextExtraPadding() {
+    int prevNextExtraPadding() {
         return prevNextExtraPadding;
     }
 
-    public static final class Builder {
+    static final class Builder {
 
 		private int lightColor;
 		private int darkColor;
@@ -229,147 +229,147 @@ class Configuration {
         private Interpolator accDecInterpolator;
         private int prevNextExtraPadding;
 
-        public Builder context(Context context) {
+        Builder context(Context context) {
 			this.context = context;
 			return this;
 		}
 
-		public Builder playColor(@ColorInt int pauseColor) {
+		Builder playColor(@ColorInt int pauseColor) {
 			this.lightColor = pauseColor;
 			return this;
 		}
 
-		public Builder darkColor(@ColorInt int playColor) {
+		Builder darkColor(@ColorInt int playColor) {
 			this.darkColor = playColor;
 			return this;
 		}
 
-		public Builder progressColor(@ColorInt int progressColor) {
+		Builder progressColor(@ColorInt int progressColor) {
 			this.progressColor = progressColor;
 			return this;
 		}
 
-		public Builder expandedColor(@ColorInt int expandedColor) {
+		Builder expandedColor(@ColorInt int expandedColor) {
 			this.expandedColor = expandedColor;
 			return this;
 		}
 
-		public Builder random(Random random) {
+		Builder random(Random random) {
 			this.random = random;
 			return this;
 		}
 
-		public Builder widgetWidth(float width) {
+		Builder widgetWidth(float width) {
 			this.width = width;
 			return this;
 		}
 
-		public Builder radius(float radius) {
+		Builder radius(float radius) {
 			this.radius = radius;
 			return this;
 		}
 
-		public Builder playDrawable(@Nullable Drawable playDrawable) {
+		Builder playDrawable(@Nullable Drawable playDrawable) {
 			this.playDrawable = playDrawable;
 			return this;
 		}
 
-		public Builder pauseDrawable(@Nullable Drawable pauseDrawable) {
+		Builder pauseDrawable(@Nullable Drawable pauseDrawable) {
 			this.pauseDrawable = pauseDrawable;
 			return this;
 		}
 
-		public Builder prevDrawable(@Nullable Drawable prevDrawable) {
+		Builder prevDrawable(@Nullable Drawable prevDrawable) {
 			this.prevDrawable = prevDrawable;
 			return this;
 		}
 
-		public Builder nextDrawable(@Nullable Drawable nextDrawable) {
+		Builder nextDrawable(@Nullable Drawable nextDrawable) {
 			this.nextDrawable = nextDrawable;
 			return this;
 		}
 
-		public Builder playlistDrawable(@Nullable Drawable plateDrawable) {
+		Builder playlistDrawable(@Nullable Drawable plateDrawable) {
 			this.playlistDrawable = plateDrawable;
 			return this;
 		}
 
-		public Builder albumDrawable(@Nullable Drawable albumDrawable) {
+		Builder albumDrawable(@Nullable Drawable albumDrawable) {
 			this.albumDrawable = albumDrawable;
 			return this;
 		}
 
-		public Builder playbackState(PlaybackState playbackState) {
+		Builder playbackState(PlaybackState playbackState) {
 			this.playbackState = playbackState;
 			return this;
 		}
 
-        public Builder buttonPadding(int buttonPadding) {
+        Builder buttonPadding(int buttonPadding) {
             this.buttonPadding = buttonPadding;
             return this;
         }
 
-        public Builder crossStrokeWidth(float crossStrokeWidth) {
+        Builder crossStrokeWidth(float crossStrokeWidth) {
             this.crossStrokeWidth = crossStrokeWidth;
             return this;
         }
 
-        public Builder progressStrokeWidth(float progressStrokeWidth) {
+        Builder progressStrokeWidth(float progressStrokeWidth) {
             this.progressStrokeWidth = progressStrokeWidth;
             return this;
         }
 
-        public Builder shadowRadius(float shadowRadius) {
+        Builder shadowRadius(float shadowRadius) {
             this.shadowRadius = shadowRadius;
             return this;
         }
 
-        public Builder shadowDx(float shadowDx) {
+        Builder shadowDx(float shadowDx) {
             this.shadowDx = shadowDx;
             return this;
         }
 
-        public Builder shadowDy(float shadowDy) {
+        Builder shadowDy(float shadowDy) {
             this.shadowDy = shadowDy;
             return this;
         }
 
-        public Builder shadowColor(@ColorInt int shadowColor) {
+        Builder shadowColor(@ColorInt int shadowColor) {
             this.shadowColor = shadowColor;
             return this;
         }
 
-        public Builder bubblesMinSize(float bubblesMinSize) {
+        Builder bubblesMinSize(float bubblesMinSize) {
             this.bubblesMinSize = bubblesMinSize;
             return this;
         }
 
-        public Builder bubblesMaxSize(float bubblesMaxSize) {
+        Builder bubblesMaxSize(float bubblesMaxSize) {
             this.bubblesMaxSize = bubblesMaxSize;
             return this;
         }
 
-        public Builder crossColor(@ColorInt int crossColor) {
+        Builder crossColor(@ColorInt int crossColor) {
             this.crossColor = crossColor;
             return this;
         }
 
-        public Builder crossOverlappedColor(@ColorInt int crossOverlappedColor) {
+        Builder crossOverlappedColor(@ColorInt int crossOverlappedColor) {
             this.crossOverlappedColor = crossOverlappedColor;
             return this;
         }
 
-        public Builder accDecInterpolator(Interpolator accDecInterpolator) {
+        Builder accDecInterpolator(Interpolator accDecInterpolator) {
             this.accDecInterpolator = accDecInterpolator;
             return this;
         }
 
-        public Builder prevNextExtraPadding(int prevNextExtraPadding) {
+        Builder prevNextExtraPadding(int prevNextExtraPadding) {
             this.prevNextExtraPadding = prevNextExtraPadding;
             return this;
         }
 
-        public Configuration build() {
+        Configuration build() {
 			return new Configuration(this);
 		}
     }

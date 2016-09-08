@@ -162,10 +162,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     private void updateTracks() {
         MusicItem playingItem = null;
-        if (playingIndex != -1)
+        if (playingIndex != -1) {
             playingItem = items.get(playingIndex);
+        }
         items.clear();
-        items.addAll(Arrays.asList(MusicService.tracks));
+        if (MusicService.tracks != null) {
+            items.addAll(Arrays.asList(MusicService.tracks));
+            MusicService.tracks = null;
+        }
         if (playingItem == null) {
             playingIndex = -1;
         } else {

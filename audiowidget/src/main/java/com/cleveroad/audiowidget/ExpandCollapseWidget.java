@@ -703,7 +703,7 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
         private float widgetWidth;
         private float widgetHeight;
 
-        public BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight, int offsetX, int offsetY) {
+        BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight, int offsetX, int offsetY) {
             super(offsetX, offsetY);
             this.radius = radius;
             this.padding = padding;
