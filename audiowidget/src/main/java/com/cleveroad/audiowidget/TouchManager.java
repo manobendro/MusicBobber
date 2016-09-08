@@ -10,7 +10,6 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -72,6 +71,7 @@ class TouchManager implements View.OnTouchListener {
         boolean res = (!touchCanceled || event.getAction() == MotionEvent.ACTION_UP) && gestureDetector.onTouchEvent(event);
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             touchCanceled = false;
+            gestureListener.onDown(event);
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
             if (!touchCanceled) {
                 gestureListener.onUpEvent(event);
@@ -353,7 +353,7 @@ class TouchManager implements View.OnTouchListener {
                     callback.onMoved(newX - params.x, newY - params.y);
                 }
                 params.x = (int) newX;
-                params.y = (int) newY; Log.e("xyxy", "newX="+newX + "; newY="+newY);
+                params.y = (int) newY;
 
                 try {
                     windowManager.updateViewLayout(view, params);

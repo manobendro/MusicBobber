@@ -412,6 +412,7 @@ public class AudioWidget {
     }
 
     public void expand() {
+        removeWidgetShown = false;
         playPauseButton.enableProgressChanges(false);
         playPauseButton.postDelayed(this::checkSpaceAndShowExpanded, PlayPauseButton.PROGRESS_CHANGES_DURATION);
     }
@@ -547,6 +548,7 @@ public class AudioWidget {
      */
     private class PlayPauseButtonCallback extends TouchManager.SimpleCallback {
 
+        private static final long REMOVE_BTN_ANIM_DURATION = 200;
         private final ValueAnimator.AnimatorUpdateListener animatorUpdateListener;
         private boolean readyToRemove;
 
@@ -555,15 +557,8 @@ public class AudioWidget {
                 if (!removeWidgetShown) {
                     return;
                 }
-                WindowManager.LayoutParams removeBtnParams = (WindowManager.LayoutParams) removeWidgetView.getLayoutParams();
-                removeBtnParams.y = animatedRemBtnYPos = (int)((float) animation.getAnimatedValue());
-
-                try {
-                    windowManager.updateViewLayout(removeWidgetView, removeBtnParams);
-                } catch (IllegalArgumentException e) {
-                    // view not attached to window
-                    animation.cancel();
-                }
+                animatedRemBtnYPos = (int)((float) animation.getAnimatedValue());
+                updateRemoveBtnPosition();
             };
         }
 
@@ -578,7 +573,6 @@ public class AudioWidget {
         @Override
         public void onLongClick(float x, float y) {
             released = true;
-            removeWidgetShown = false;
             expand();
         }
 
@@ -590,7 +584,7 @@ public class AudioWidget {
                 if (!released) {
                     removeWidgetShown = true;
                     ValueAnimator animator = ValueAnimator.ofFloat(hiddenRemWidPos.y, visibleRemWidPos.y);
-                    animator.setDuration(200);
+                    animator.setDuration(REMOVE_BTN_ANIM_DURATION);
                     animator.addUpdateListener(animatorUpdateListener);
                     animator.start();
                 }
@@ -609,6 +603,10 @@ public class AudioWidget {
                     vibrator.vibrate(VIBRATION_DURATION);
                 }
             }
+            updateRemoveBtnPosition();
+        }
+
+        private void updateRemoveBtnPosition() {
             if(removeWidgetShown) {
                 WindowManager.LayoutParams playPauseBtnParams = (WindowManager.LayoutParams) playPauseButton.getLayoutParams();
                 WindowManager.LayoutParams removeBtnParams = (WindowManager.LayoutParams) removeWidgetView.getLayoutParams();
@@ -624,13 +622,15 @@ public class AudioWidget {
                 if (animatedRemBtnYPos == -1) {
                     animatedRemBtnYPos = visibleRemWidPos.y;
                 }
+
+                removeBtnParams.x = (int) DrawableUtils.rotateX(
+                        visibleRemWidPos.x, animatedRemBtnYPos - radius * distance,
+                        hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
+                removeBtnParams.y = (int) DrawableUtils.rotateY(
+                        visibleRemWidPos.x, animatedRemBtnYPos - radius * distance,
+                        hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
+
                 try {
-                    removeBtnParams.x = (int) DrawableUtils.rotateX(
-                            visibleRemWidPos.x, animatedRemBtnYPos - radius * distance,
-                            hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
-                    removeBtnParams.y = (int) DrawableUtils.rotateY(
-                            visibleRemWidPos.x, animatedRemBtnYPos - radius * distance,
-                            hiddenRemWidPos.x, animatedRemBtnYPos, (float) rotationDegrees);
                     windowManager.updateViewLayout(removeWidgetView, removeBtnParams);
                 } catch (IllegalArgumentException e) {
                     // view not attached to window
@@ -645,7 +645,7 @@ public class AudioWidget {
             released = true;
             if (removeWidgetShown) {
                 ValueAnimator animator = ValueAnimator.ofFloat(visibleRemWidPos.y, hiddenRemWidPos.y);
-                animator.setDuration(200);
+                animator.setDuration(REMOVE_BTN_ANIM_DURATION);
                 animator.addUpdateListener(animatorUpdateListener);
                 animator.addListener(new AnimatorListenerAdapter() {
 
