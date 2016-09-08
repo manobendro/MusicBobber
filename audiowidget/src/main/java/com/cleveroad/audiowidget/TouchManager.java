@@ -10,6 +10,7 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -352,7 +353,7 @@ class TouchManager implements View.OnTouchListener {
                     callback.onMoved(newX - params.x, newY - params.y);
                 }
                 params.x = (int) newX;
-                params.y = (int) newY;
+                params.y = (int) newY; Log.e("xyxy", "newX="+newX + "; newY="+newY);
 
                 try {
                     windowManager.updateViewLayout(view, params);
@@ -389,9 +390,9 @@ class TouchManager implements View.OnTouchListener {
             final float newX, newY;
 
             if(dx + params.x > screenWidth / 2f) {
-                newX = boundsChecker.stickyRightSide(screenWidth) + view.getWidth() / 2f;
+                newX = boundsChecker.stickyRightSide(screenWidth) + Math.min(view.getWidth(), view.getHeight()) / 2f;
             } else {
-                newX = boundsChecker.stickyLeftSide(screenWidth) - view.getWidth() / 2f;
+                newX = boundsChecker.stickyLeftSide(screenWidth) - Math.min(view.getWidth(), view.getHeight()) / 2f;
             }
 
             newY = params.y + dy;
