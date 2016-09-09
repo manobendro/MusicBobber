@@ -2,6 +2,7 @@ package com.cleveroad.audiowidget;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Canvas;
@@ -12,9 +13,9 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.View;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import android.widget.ImageView;
 
 import java.util.Random;
 
@@ -22,7 +23,7 @@ import java.util.Random;
  * Expanded state view.
  */
 @SuppressLint("ViewConstructor")
-class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateListener {
+class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackStateListener {
 
 	static final int DIRECTION_LEFT = 1;
 	static final int DIRECTION_RIGHT = 2;
@@ -97,6 +98,11 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 	private AudioWidget.OnControlsClickListener onControlsClickListener;
     private int touchedButtonIndex;
 
+    @Nullable
+    private AnimationProgressListener expandListener;
+    @Nullable
+    private AnimationProgressListener collapseListener;
+
 	public ExpandCollapseWidget(@NonNull Configuration configuration) {
 		super(configuration.context());
 		setLayerType(LAYER_TYPE_SOFTWARE, null);
@@ -146,13 +152,23 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 		this.bubbleSpeeds = new float[TOTAL_BUBBLES_COUNT];
 		this.bubblePositions = new float[TOTAL_BUBBLES_COUNT * 2];
 		this.playbackState.addPlaybackStateListener(this);
-		this.expandAnimator = ValueAnimator.ofInt(0, (int) EXPAND_DURATION_L).setDuration(EXPAND_DURATION_L);
+
+        this.expandAnimator = ValueAnimator.ofPropertyValuesHolder(
+                PropertyValuesHolder.ofFloat("percent", 0f, 1f),
+                PropertyValuesHolder.ofInt("expandPosition", 0, (int) EXPAND_DURATION_L),
+                PropertyValuesHolder.ofFloat("alpha", 0f, 1f, 1f, 1f, 1f, 1f, 1f, 1f)
+        ).setDuration(EXPAND_DURATION_L);
+
         LinearInterpolator interpolator = new LinearInterpolator();
         this.expandAnimator.setInterpolator(interpolator);
 		this.expandAnimator.addUpdateListener(animation -> {
-			int position = (int) animation.getAnimatedValue();
-			updateExpandAnimation(position);
+			updateExpandAnimation((int) animation.getAnimatedValue("expandPosition"));
+            ExpandCollapseWidget.this.setAlpha((float) animation.getAnimatedValue("alpha"));
 			invalidate();
+
+            if(expandListener != null) {
+                expandListener.onValueChanged((float) animation.getAnimatedValue("percent"));
+            }
 		});
 		this.expandAnimator.addListener(new AnimatorListenerAdapter() {
 			@Override
@@ -177,12 +193,20 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 				animatingExpand = false;
 			}
 		});
-		this.collapseAnimator = ValueAnimator.ofInt(0, (int) COLLAPSE_DURATION_L).setDuration(COLLAPSE_DURATION_L);
+		this.collapseAnimator = ValueAnimator.ofPropertyValuesHolder(
+                PropertyValuesHolder.ofFloat("percent", 0f, 1f),
+                PropertyValuesHolder.ofInt("expandPosition", 0, (int) COLLAPSE_DURATION_L),
+                PropertyValuesHolder.ofFloat("alpha", 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0f)
+        ).setDuration(COLLAPSE_DURATION_L);
         this.collapseAnimator.setInterpolator(interpolator);
 		this.collapseAnimator.addUpdateListener(animation -> {
-			int position = (int) animation.getAnimatedValue();
-			updateCollapseAnimation(position);
+			updateCollapseAnimation((int) animation.getAnimatedValue("expandPosition"));
+            ExpandCollapseWidget.this.setAlpha((float) animation.getAnimatedValue("alpha"));
 			invalidate();
+
+            if(collapseListener != null) {
+                collapseListener.onValueChanged((float) animation.getAnimatedValue("percent"));
+            }
 		});
 		this.collapseAnimator.addListener(new AnimatorListenerAdapter() {
 			@Override
@@ -694,6 +718,18 @@ class ExpandCollapseWidget extends View implements PlaybackState.PlaybackStateLi
 
     public TouchManager.BoundsChecker newBoundsChecker(int offsetX, int offsetY) {
         return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight, offsetX, offsetY);
+    }
+
+    public void setCollapseListener(@Nullable AnimationProgressListener collapseListener) {
+        this.collapseListener = collapseListener;
+    }
+
+    public void setExpandListener(@Nullable AnimationProgressListener expandListener) {
+        this.expandListener = expandListener;
+    }
+
+    interface AnimationProgressListener {
+        void onValueChanged(float percent);
     }
 
     private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {

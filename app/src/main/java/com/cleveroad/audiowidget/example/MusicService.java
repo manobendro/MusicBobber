@@ -15,6 +15,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -287,6 +288,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public boolean onPlayPauseClicked() {
+        if(playingIndex == -1) {
+            Toast.makeText(this, R.string.song_not_selected, Toast.LENGTH_SHORT).show();
+            return true;
+        }
         if (mediaPlayer.isPlaying()) {
             stopTrackingPosition();
             mediaPlayer.pause();

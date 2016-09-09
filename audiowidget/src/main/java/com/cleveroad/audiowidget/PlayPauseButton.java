@@ -4,22 +4,29 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.View;
+import android.support.v7.graphics.Palette;
 import android.view.animation.LinearInterpolator;
+import android.widget.ImageView;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
  * Collapsed state view.
  */
 @SuppressLint("ViewConstructor")
-class PlayPauseButton extends View implements PlaybackState.PlaybackStateListener {
+class PlayPauseButton extends ImageView implements PlaybackState.PlaybackStateListener {
 
 	private static final float BUBBLES_ANGLE_STEP = 18.0f;
 	private static final float ANIMATION_TIME_F = 8 * Configuration.FRAME_SPEED;
@@ -55,6 +62,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
     private final float buttonPadding;
     private final float bubblesMinSize;
     private final float bubblesMaxSize;
+    private final Map<Integer, Boolean> isNeedToFillAlbumCoverMap = new HashMap<>();
 
 	private boolean animatingBubbles;
 	private float randomStartAngle;
@@ -65,6 +73,9 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 
 	@Nullable
 	private Drawable albumCover;
+    @Nullable
+    private AsyncTask lastPaletteAsyncTask;
+    private final float hsvArray[] = new float[3];
 
     public PlayPauseButton(@NonNull Configuration configuration) {
 		super(configuration.context());
@@ -224,7 +235,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		float cy = getHeight() >> 1;
 		canvas.scale(buttonSize, buttonSize, cx, cy);
 		if (animatingBubbles) {
-			for (int i=0; i<TOTAL_BUBBLES_COUNT; i++) {
+			for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
 				float angle = randomStartAngle + BUBBLES_ANGLE_STEP * i;
 				float speed = bubbleSpeeds[i];
 				float x = DrawableUtils.rotateX(cx, cy * (1 - speed), cx, cy, angle);
@@ -247,13 +258,17 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
             }
 		}
 
-		if(albumCover == null) {
-			canvas.drawCircle(cx, cy, radius, buttonPaint);
-		} else {
-			albumCover.setBounds((int) (cx - radius), (int) (cy - radius), (int) (cx + radius), (int) (cy + radius));
-			albumCover.draw(canvas);
-			canvas.drawCircle(cx, cy, radius, albumPlaceholderPaint);
-		}
+        canvas.drawCircle(cx, cy, radius, buttonPaint);
+        if(albumCover != null) {
+            canvas.drawCircle(cx, cy, radius, buttonPaint);
+            albumCover.setBounds((int) (cx - radius), (int) (cy - radius), (int) (cx + radius), (int) (cy + radius));
+            albumCover.draw(canvas);
+			Boolean isNeedToFillAlbumCover = isNeedToFillAlbumCoverMap.get(albumCover.hashCode());
+			if(isNeedToFillAlbumCover != null && isNeedToFillAlbumCover) {
+				canvas.drawCircle(cx, cy, radius, albumPlaceholderPaint);
+			}
+        }
+
 		float padding = progressPaint.getStrokeWidth() / 2f;
 		bounds.set(cx - radius + padding, cy - radius + padding, cx + radius - padding, cy + radius - padding);
 		canvas.drawArc(bounds, -90, animatedProgress, false, progressPaint);
@@ -272,7 +287,7 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
 		}
 	}
 
-	@Override
+    @Override
 	public void onStateChanged(int oldState, int newState, Object initiator) {
 		if (initiator instanceof AudioWidget)
 			return;
@@ -337,21 +352,27 @@ class PlayPauseButton extends View implements PlaybackState.PlaybackStateListene
         return new BoundsCheckerImpl(radius, offsetX, offsetY);
     }
 
-	public void albumCover(Drawable albumCover) {
-		if(albumCover == null && this.albumCover != null) {
-			this.albumCover = null;
-			postInvalidate();
-		} else {
-			if (this.albumCover == albumCover) {
-				return;
-			}
-			if (albumCover.getConstantState() != null) {
-				this.albumCover = albumCover.getConstantState().newDrawable().mutate();
-			} else {
-				this.albumCover = albumCover;
-			}
-			postInvalidate();
-		}
+	public void albumCover(Drawable newAlbumCover) {
+        if(this.albumCover == newAlbumCover) return;
+        this.albumCover = newAlbumCover;
+
+        if(albumCover instanceof BitmapDrawable && !isNeedToFillAlbumCoverMap.containsKey(albumCover.hashCode())) {
+            Bitmap bitmap = ((BitmapDrawable) albumCover).getBitmap();
+            if(bitmap != null && !bitmap.isRecycled()) {
+                if(lastPaletteAsyncTask != null && !lastPaletteAsyncTask.isCancelled()) {
+                    lastPaletteAsyncTask.cancel(true);
+                }
+                lastPaletteAsyncTask = Palette.from(bitmap).generate(palette -> {
+                    int dominantColor = palette.getDominantColor(Integer.MAX_VALUE);
+                    if(dominantColor != Integer.MAX_VALUE) {
+						Color.colorToHSV(dominantColor, hsvArray);
+						isNeedToFillAlbumCoverMap.put(albumCover.hashCode(), hsvArray[2] > 0.65f);
+                        postInvalidate();
+                    }
+                });
+            }
+        }
+        postInvalidate();
 	}
 
 	private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {

@@ -25,7 +25,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import java.lang.ref.WeakReference;
+import java.util.Map;
 import java.util.Random;
+import java.util.WeakHashMap;
 
 /**
  * Audio widget implementation.
@@ -67,6 +70,8 @@ public class AudioWidget {
     private final TouchManager expandedWidgetManager;
     private final TouchManager.BoundsChecker ppbToExpBoundsChecker;
     private final TouchManager.BoundsChecker expToPpbBoundsChecker;
+
+    private final Map<Integer, WeakReference<Drawable>> albumCoverCache = new WeakHashMap<>();
 
     /**
      * Bounds of remove widget view. Used for checking if play/pause button is inside this bounds
@@ -336,9 +341,20 @@ public class AudioWidget {
                     expandCollapseWidget.albumCover(null);
                     playPauseButton.albumCover(null);
                 } else {
+                    WeakReference<Drawable> wrDrawable = albumCoverCache.get(bitmap.hashCode());
+                    if(wrDrawable != null) {
+                        Drawable drawable = wrDrawable.get();
+                        if(drawable != null) {
+                            expandCollapseWidget.albumCover(drawable);
+                            playPauseButton.albumCover(drawable);
+                            return;
+                        }
+                    }
+
                     Drawable albumCover = new BitmapDrawable(context.getResources(), bitmap);
                     expandCollapseWidget.albumCover(albumCover);
                     playPauseButton.albumCover(albumCover);
+                    albumCoverCache.put(bitmap.hashCode(), new WeakReference<>(albumCover));
                 }
             }
         };
@@ -418,7 +434,7 @@ public class AudioWidget {
     }
 
     public void collapse() {
-        playPauseButton.setVisibility(View.VISIBLE);
+        expandCollapseWidget.setCollapseListener(playPauseButton::setAlpha);
 
         WindowManager.LayoutParams params = (WindowManager.LayoutParams) expandCollapseWidget.getLayoutParams();
         int cx = params.x + expandCollapseWidget.getWidth() / 2;
@@ -477,7 +493,7 @@ public class AudioWidget {
             show(expandCollapseWidget, x1, y1);
             playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
 
-            playPauseButton.setVisibility(View.GONE);
+            expandCollapseWidget.setExpandListener(percent -> playPauseButton.setAlpha(1 - percent));
             expandCollapseWidget.expand(expandDirection);
         });
     }
