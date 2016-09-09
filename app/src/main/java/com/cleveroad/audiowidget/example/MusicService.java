@@ -37,6 +37,7 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioWidget.OnControlsClickListener, AudioWidget.OnWidgetStateChangedListener {
 
+    private static final String TAG = "MusicService";
     private static final String ACTION_SET_TRACKS = "ACTION_SET_TRACKS";
     private static final String ACTION_PLAY_TRACKS = "ACTION_PLAY_TRACKS";
     private static final String ACTION_CHANGE_STATE = "ACTION_CHANGE_STATE";
@@ -116,6 +117,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                         } else {
                             audioWidget.hide();
                         }
+                    } else {
+                        Log.w(TAG, "Can't change audio widget state! Device does not have drawOverlays permissions!");
                     }
                     break;
                 }
@@ -163,10 +166,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     private void updateTracks() {
         MusicItem playingItem = null;
-        if (playingIndex != -1)
+        if (playingIndex != -1) {
             playingItem = items.get(playingIndex);
+        }
         items.clear();
-        items.addAll(Arrays.asList(MusicService.tracks));
+        if (MusicService.tracks != null) {
+            items.addAll(Arrays.asList(MusicService.tracks));
+            MusicService.tracks = null;
+        }
         if (playingItem == null) {
             playingIndex = -1;
         } else {
@@ -267,7 +274,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onPlaylistLongClicked() {
-        Log.d("TEST", "playlist long clicked");
+        Log.d(TAG, "playlist long clicked");
     }
 
     @Override
@@ -283,7 +290,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onPreviousLongClicked() {
-        Log.d("TEST", "previous long clicked");
+        Log.d(TAG, "previous long clicked");
     }
 
     @Override
@@ -308,7 +315,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onPlayPauseLongClicked() {
-        Log.d("TEST", "play/pause long clicked");
+        Log.d(TAG, "play/pause long clicked");
     }
 
     @Override
@@ -324,21 +331,21 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onNextLongClicked() {
-        Log.d("TEST", "next long clicked");
+        Log.d(TAG, "next long clicked");
     }
 
     @Override
     public void onAlbumClicked() {
-        Log.d("TEST", "album clicked");
+        Log.d(TAG, "album clicked");
     }
 
     @Override
     public void onAlbumLongClicked() {
-        Log.d("TEST", "album long clicked");
+        Log.d(TAG, "album long clicked");
     }
 
     private void startTrackingPosition() {
-        timer = new Timer("MusicService Timer");
+        timer = new Timer(TAG);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {

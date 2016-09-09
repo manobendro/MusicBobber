@@ -568,7 +568,7 @@ public class AudioWidget {
         private final ValueAnimator.AnimatorUpdateListener animatorUpdateListener;
         private boolean readyToRemove;
 
-        public PlayPauseButtonCallback() {
+        PlayPauseButtonCallback() {
             animatorUpdateListener = animation -> {
                 if (!removeWidgetShown) {
                     return;

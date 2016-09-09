@@ -37,7 +37,7 @@ class TouchManager implements View.OnTouchListener {
     private Float lastRawX, lastRawY;
     private boolean touchCanceled;
 
-    public TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
+    TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
         this.gestureDetector = new GestureDetector(view.getContext(), gestureListener = new GestureListener());
         gestureDetector.setIsLongpressEnabled(true);
         this.view = view;
@@ -51,17 +51,17 @@ class TouchManager implements View.OnTouchListener {
         velocityAnimator = new FlingGestureAnimator();
     }
 
-    public TouchManager screenWidth(int screenWidth) {
+    TouchManager screenWidth(int screenWidth) {
         this.screenWidth = screenWidth;
         return this;
     }
 
-    public TouchManager screenHeight(int screenHeight) {
+    TouchManager screenHeight(int screenHeight) {
         this.screenHeight = screenHeight;
         return this;
     }
 
-    public TouchManager callback(Callback callback) {
+    TouchManager callback(Callback callback) {
         this.callback = callback;
         return this;
     }
@@ -140,7 +140,7 @@ class TouchManager implements View.OnTouchListener {
         void onAnimationCompleted();
     }
 
-    public static class SimpleCallback implements Callback {
+    static class SimpleCallback implements Callback {
 
         @Override
         public void onClick(float x, float y) {
@@ -337,7 +337,7 @@ class TouchManager implements View.OnTouchListener {
         private final Interpolator interpolator;
         private WindowManager.LayoutParams params;
 
-        public FlingGestureAnimator() {
+        FlingGestureAnimator() {
             interpolator = new DecelerateInterpolator();
             dxHolder = PropertyValuesHolder.ofFloat("x", 0, 0);
             dyHolder = PropertyValuesHolder.ofFloat("y", 0, 0);
@@ -377,7 +377,7 @@ class TouchManager implements View.OnTouchListener {
             });
         }
 
-        public void animate(float velocityX, float velocityY) {
+        void animate(float velocityX, float velocityY) {
             if (isAnimating()) {
                 return;
             }
@@ -403,7 +403,7 @@ class TouchManager implements View.OnTouchListener {
             flingGestureAnimator.start();
         }
 
-        public boolean isAnimating() {
+        boolean isAnimating() {
             return flingGestureAnimator.isRunning();
         }
     }
