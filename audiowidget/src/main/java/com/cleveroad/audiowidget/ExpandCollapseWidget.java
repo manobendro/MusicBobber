@@ -156,14 +156,14 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
         this.expandAnimator = ValueAnimator.ofPropertyValuesHolder(
                 PropertyValuesHolder.ofFloat("percent", 0f, 1f),
                 PropertyValuesHolder.ofInt("expandPosition", 0, (int) EXPAND_DURATION_L),
-                PropertyValuesHolder.ofFloat("alpha", 0f, 1f, 1f, 1f, 1f, 1f, 1f, 1f)
+                PropertyValuesHolder.ofFloat("alpha", 0f, 1f, 1f, 1f, 1f)
         ).setDuration(EXPAND_DURATION_L);
 
         LinearInterpolator interpolator = new LinearInterpolator();
         this.expandAnimator.setInterpolator(interpolator);
 		this.expandAnimator.addUpdateListener(animation -> {
 			updateExpandAnimation((int) animation.getAnimatedValue("expandPosition"));
-            ExpandCollapseWidget.this.setAlpha((float) animation.getAnimatedValue("alpha"));
+            setAlpha((float) animation.getAnimatedValue("alpha"));
 			invalidate();
 
             if(expandListener != null) {
@@ -196,12 +196,12 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		this.collapseAnimator = ValueAnimator.ofPropertyValuesHolder(
                 PropertyValuesHolder.ofFloat("percent", 0f, 1f),
                 PropertyValuesHolder.ofInt("expandPosition", 0, (int) COLLAPSE_DURATION_L),
-                PropertyValuesHolder.ofFloat("alpha", 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0f)
+                PropertyValuesHolder.ofFloat("alpha", 1f, 1f, 1f, 1f, 0f)
         ).setDuration(COLLAPSE_DURATION_L);
         this.collapseAnimator.setInterpolator(interpolator);
 		this.collapseAnimator.addUpdateListener(animation -> {
 			updateCollapseAnimation((int) animation.getAnimatedValue("expandPosition"));
-            ExpandCollapseWidget.this.setAlpha((float) animation.getAnimatedValue("alpha"));
+            setAlpha((float) animation.getAnimatedValue("alpha"));
 			invalidate();
 
             if(collapseListener != null) {

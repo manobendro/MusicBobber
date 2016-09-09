@@ -493,7 +493,7 @@ public class AudioWidget {
             show(expandCollapseWidget, x1, y1);
             playPauseButton.setLayerType(View.LAYER_TYPE_NONE, null);
 
-            expandCollapseWidget.setExpandListener(percent -> playPauseButton.setAlpha(1 - percent));
+            expandCollapseWidget.setExpandListener(percent -> playPauseButton.setAlpha(1f - percent));
             expandCollapseWidget.expand(expandDirection);
         });
     }
