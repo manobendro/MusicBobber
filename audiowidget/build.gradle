@@ -7,9 +7,9 @@ android {
 
     defaultConfig {
         minSdkVersion 12
-        targetSdkVersion 23
-        versionCode 4
-        versionName "0.9.3"
+        targetSdkVersion 24
+        versionCode 10
+        versionName "1.0.0"
     }
     buildTypes {
         release {
@@ -26,8 +26,15 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    //versions
+    final SUPPORT_LIB_VERSION = '24.2.0'
+
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.4.0'
+    //noinspection GradleCompatible
+    compile "com.android.support:appcompat-v7:$SUPPORT_LIB_VERSION"
+    //noinspection GradleCompatible
+    compile "com.android.support:palette-v7:$SUPPORT_LIB_VERSION"
 }
 
 apply from: './gradle-mvn-push.gradle'

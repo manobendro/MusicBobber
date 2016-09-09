@@ -27,7 +27,7 @@ class TouchManager implements View.OnTouchListener {
     private final BoundsChecker boundsChecker;
     private final WindowManager windowManager;
     private final StickyEdgeAnimator stickyEdgeAnimator;
-    private final VelocityAnimator velocityAnimator;
+    private final FlingGestureAnimator velocityAnimator;
 
     private GestureListener gestureListener;
     private GestureDetector gestureDetector;
@@ -37,7 +37,7 @@ class TouchManager implements View.OnTouchListener {
     private Float lastRawX, lastRawY;
     private boolean touchCanceled;
 
-    public TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
+    TouchManager(@NonNull View view, @NonNull BoundsChecker boundsChecker) {
         this.gestureDetector = new GestureDetector(view.getContext(), gestureListener = new GestureListener());
         gestureDetector.setIsLongpressEnabled(true);
         this.view = view;
@@ -48,20 +48,20 @@ class TouchManager implements View.OnTouchListener {
         this.screenWidth = context.getResources().getDisplayMetrics().widthPixels;
         this.screenHeight = context.getResources().getDisplayMetrics().heightPixels - context.getResources().getDimensionPixelSize(R.dimen.aw_status_bar_height);
         stickyEdgeAnimator = new StickyEdgeAnimator();
-        velocityAnimator = new VelocityAnimator();
+        velocityAnimator = new FlingGestureAnimator();
     }
 
-    public TouchManager screenWidth(int screenWidth) {
+    TouchManager screenWidth(int screenWidth) {
         this.screenWidth = screenWidth;
         return this;
     }
 
-    public TouchManager screenHeight(int screenHeight) {
+    TouchManager screenHeight(int screenHeight) {
         this.screenHeight = screenHeight;
         return this;
     }
 
-    public TouchManager callback(Callback callback) {
+    TouchManager callback(Callback callback) {
         this.callback = callback;
         return this;
     }
@@ -71,6 +71,7 @@ class TouchManager implements View.OnTouchListener {
         boolean res = (!touchCanceled || event.getAction() == MotionEvent.ACTION_UP) && gestureDetector.onTouchEvent(event);
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             touchCanceled = false;
+            gestureListener.onDown(event);
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
             if (!touchCanceled) {
                 gestureListener.onUpEvent(event);
@@ -139,7 +140,7 @@ class TouchManager implements View.OnTouchListener {
         void onAnimationCompleted();
     }
 
-    public static class SimpleCallback implements Callback {
+    static class SimpleCallback implements Callback {
 
         @Override
         public void onClick(float x, float y) {
@@ -328,69 +329,82 @@ class TouchManager implements View.OnTouchListener {
     /**
      * Helper class for animating fling gesture.
      */
-    private class VelocityAnimator {
-        private final ValueAnimator velocityAnimator;
+    private class FlingGestureAnimator {
+        private static final long DEFAULT_ANIM_DURATION = 200;
+        private final ValueAnimator flingGestureAnimator;
         private final PropertyValuesHolder dxHolder;
         private final PropertyValuesHolder dyHolder;
         private final Interpolator interpolator;
         private WindowManager.LayoutParams params;
-        private long prevPlayTime;
 
-        public VelocityAnimator() {
+        FlingGestureAnimator() {
             interpolator = new DecelerateInterpolator();
-            dxHolder = PropertyValuesHolder.ofFloat("dx", 0, 0);
-            dyHolder = PropertyValuesHolder.ofFloat("dy", 0, 0);
+            dxHolder = PropertyValuesHolder.ofFloat("x", 0, 0);
+            dyHolder = PropertyValuesHolder.ofFloat("y", 0, 0);
             dxHolder.setEvaluator(new FloatEvaluator());
             dyHolder.setEvaluator(new FloatEvaluator());
-            velocityAnimator = ValueAnimator.ofPropertyValuesHolder(dxHolder, dyHolder);
-            velocityAnimator.setInterpolator(interpolator);
-            velocityAnimator.setDuration(400);
-            velocityAnimator.addUpdateListener(animation -> {
-                long curPlayTime = animation.getCurrentPlayTime();
-                long dt = curPlayTime - prevPlayTime;
-                float dx = (float) animation.getAnimatedValue("dx") * dt / 1000f;
-                float dy = (float) animation.getAnimatedValue("dy") * dt / 1000f;
-                prevPlayTime = curPlayTime;
-                params.x += dx;
-                params.y += dy;
+            flingGestureAnimator = ValueAnimator.ofPropertyValuesHolder(dxHolder, dyHolder);
+            flingGestureAnimator.setInterpolator(interpolator);
+            flingGestureAnimator.setDuration(DEFAULT_ANIM_DURATION);
+            flingGestureAnimator.addUpdateListener(animation -> {
+                float newX = (float) animation.getAnimatedValue("x");
+                float newY = (float) animation.getAnimatedValue("y");
                 if (callback != null) {
-                    callback.onMoved(dx, dy);
+                    callback.onMoved(newX - params.x, newY - params.y);
                 }
+                params.x = (int) newX;
+                params.y = (int) newY;
+
                 try {
                     windowManager.updateViewLayout(view, params);
                 } catch (IllegalArgumentException e) {
                     animation.cancel();
                 }
             });
-            velocityAnimator.addListener(new AnimatorListenerAdapter() {
+            flingGestureAnimator.addListener(new AnimatorListenerAdapter() {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    prevPlayTime = 0;
                     stickyEdgeAnimator.animate(boundsChecker);
                 }
 
                 @Override
                 public void onAnimationCancel(Animator animation) {
                     super.onAnimationCancel(animation);
-                    prevPlayTime = 0;
                     stickyEdgeAnimator.animate(boundsChecker);
                 }
             });
         }
 
-        public void animate(float velocityX, float velocityY) {
-            if (isAnimating())
+        void animate(float velocityX, float velocityY) {
+            if (isAnimating()) {
                 return;
+            }
+
             params = (WindowManager.LayoutParams) view.getLayoutParams();
-            dxHolder.setFloatValues(velocityX, 0);
-            dyHolder.setFloatValues(velocityY, 0);
-            velocityAnimator.start();
+
+            float dx = velocityX / 1000f * DEFAULT_ANIM_DURATION;
+            float dy = velocityY / 1000f * DEFAULT_ANIM_DURATION;
+
+            final float newX, newY;
+
+            if(dx + params.x > screenWidth / 2f) {
+                newX = boundsChecker.stickyRightSide(screenWidth) + Math.min(view.getWidth(), view.getHeight()) / 2f;
+            } else {
+                newX = boundsChecker.stickyLeftSide(screenWidth) - Math.min(view.getWidth(), view.getHeight()) / 2f;
+            }
+
+            newY = params.y + dy;
+
+            dxHolder.setFloatValues(params.x, newX);
+            dyHolder.setFloatValues(params.y, newY);
+
+            flingGestureAnimator.start();
         }
 
-        public boolean isAnimating() {
-            return velocityAnimator.isRunning();
+        boolean isAnimating() {
+            return flingGestureAnimator.isRunning();
         }
     }
 
@@ -398,6 +412,7 @@ class TouchManager implements View.OnTouchListener {
      * Helper class for animating sticking to screen edge.
      */
     private class StickyEdgeAnimator {
+        private static final long DEFAULT_ANIM_DURATION = 300;
         private final PropertyValuesHolder dxHolder;
         private final PropertyValuesHolder dyHolder;
         private final ValueAnimator edgeAnimator;
@@ -412,7 +427,7 @@ class TouchManager implements View.OnTouchListener {
             dyHolder.setEvaluator(new IntEvaluator());
             edgeAnimator = ValueAnimator.ofPropertyValuesHolder(dxHolder, dyHolder);
             edgeAnimator.setInterpolator(interpolator);
-            edgeAnimator.setDuration(400);
+            edgeAnimator.setDuration(DEFAULT_ANIM_DURATION);
             edgeAnimator.addUpdateListener(animation -> {
                 int x = (int) animation.getAnimatedValue("x");
                 int y = (int) animation.getAnimatedValue("y");
@@ -444,8 +459,9 @@ class TouchManager implements View.OnTouchListener {
         }
 
         public void animate(BoundsChecker boundsChecker, @Nullable Runnable afterAnimation) {
-            if (edgeAnimator.isRunning())
+            if (edgeAnimator.isRunning()) {
                 return;
+            }
             params = (WindowManager.LayoutParams) view.getLayoutParams();
             float cx = params.x + view.getWidth() / 2f;
             float cy = params.y + view.getWidth() / 2f;
