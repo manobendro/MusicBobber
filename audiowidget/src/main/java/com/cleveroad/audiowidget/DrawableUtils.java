@@ -7,7 +7,7 @@ class DrawableUtils {
 
 	private DrawableUtils() {}
 
-	public static float customFunction(float t, float ... pairs) {
+	static float customFunction(float t, float ... pairs) {
 		if (pairs.length == 0 || pairs.length % 2 != 0) {
 			throw new IllegalArgumentException("Length of pairs must be multiple by 2 and greater than zero.");
 		}
@@ -36,7 +36,7 @@ class DrawableUtils {
 	 * @return normalized value in range <code>0..1</code>
 	 * @throws IllegalArgumentException if value is out of range <code>[minVal, maxVal]</code>
 	 */
-	public static float normalize(float val, float minVal, float maxVal) {
+	static float normalize(float val, float minVal, float maxVal) {
 		if (val < minVal)
 			return 0;
 		if (val > maxVal)
@@ -53,7 +53,7 @@ class DrawableUtils {
 	 * @param angleInDegrees rotation angle in degrees
 	 * @return new x coordinate
 	 */
-	public static float rotateX(float pX, float pY, float cX, float cY, float angleInDegrees) {
+	static float rotateX(float pX, float pY, float cX, float cY, float angleInDegrees) {
 		double angle = Math.toRadians(angleInDegrees);
 		return (float) (Math.cos(angle) * (pX - cX) - Math.sin(angle) * (pY - cY) + cX);
 	}
@@ -67,7 +67,7 @@ class DrawableUtils {
 	 * @param angleInDegrees rotation angle in degrees
 	 * @return new y coordinate
 	 */
-	public static float rotateY(float pX, float pY, float cX, float cY, float angleInDegrees) {
+	static float rotateY(float pX, float pY, float cX, float cY, float angleInDegrees) {
 		double angle = Math.toRadians(angleInDegrees);
 		return (float) (Math.sin(angle) * (pX - cX) + Math.cos(angle) * (pY - cY) + cY);
 	}
@@ -79,7 +79,7 @@ class DrawableUtils {
 	 * @param end end of range
 	 * @return true if value belongs to range, false otherwise
 	 */
-	public static boolean isBetween(float value, float start, float end) {
+	static boolean isBetween(float value, float start, float end) {
 		if (start > end) {
 			float tmp = start;
 			start = end;
@@ -88,11 +88,11 @@ class DrawableUtils {
 		return value >= start && value <= end;
 	}
 
-	public static float between(float val, float min, float max) {
+	static float between(float val, float min, float max) {
 		return Math.min(Math.max(val, min), max);
 	}
 
-	public static int between(int val, int min, int max) {
+	static int between(int val, int min, int max) {
 		return Math.min(Math.max(val, min), max);
 	}
 
@@ -103,7 +103,7 @@ class DrawableUtils {
 	 * @param time time of animation
 	 * @return new size value
 	 */
-	public static float enlarge(float startValue, float endValue, float time) {
+	static float enlarge(float startValue, float endValue, float time) {
 		if (startValue > endValue)
 			throw new IllegalArgumentException("Start size can't be larger than end size.");
 		return startValue + (endValue - startValue) * time;
@@ -116,7 +116,7 @@ class DrawableUtils {
 	 * @param time time of animation
 	 * @return new size value
 	 */
-	public static float reduce(float startValue, float endValue, float time) {
+	static float reduce(float startValue, float endValue, float time) {
 		if (startValue < endValue)
 			throw new IllegalArgumentException("End size can't be larger than start size.");
 		return endValue + (startValue - endValue) * (1 - time);
@@ -129,7 +129,7 @@ class DrawableUtils {
      * @param a smooth coefficient
      * @return smoothed value
      */
-    public static float smooth(float prevValue, float newValue, float a) {
+    static float smooth(float prevValue, float newValue, float a) {
         return a * newValue + (1 - a) * prevValue;
     }
 

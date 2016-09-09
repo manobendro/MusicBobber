@@ -17,11 +17,11 @@ class PlaybackState {
 
 	private final Set<PlaybackStateListener> stateListeners;
 
-	public PlaybackState() {
+	PlaybackState() {
 		stateListeners = new HashSet<>();
 	}
 
-	public boolean addPlaybackStateListener(@NonNull PlaybackStateListener playbackStateListener) {
+	boolean addPlaybackStateListener(@NonNull PlaybackStateListener playbackStateListener) {
 		return stateListeners.add(playbackStateListener);
 	}
 
@@ -56,11 +56,11 @@ class PlaybackState {
 		state(Configuration.STATE_PLAYING, initiator);
 	}
 
-	public void pause(Object initiator) {
+	void pause(Object initiator) {
 		state(Configuration.STATE_PAUSED, initiator);
 	}
 
-	public void stop(Object initiator) {
+	void stop(Object initiator) {
 		state(Configuration.STATE_STOPPED, initiator);
 		position(0);
 	}

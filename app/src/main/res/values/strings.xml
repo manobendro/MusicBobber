@@ -9,4 +9,5 @@
     <string name="btn_cancel">Cancel</string>
     <string name="toast_permissions_not_granted">Permissions not granted.</string>
     <string name="no_music_found">No music found</string>
+    <string name="song_not_selected">Song not selected!</string>
 </resources>
