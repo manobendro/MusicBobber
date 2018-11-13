@@ -21,7 +21,7 @@ To use Audio Widget Overlay first add dependency to your project:
  
 ```groovy
 dependencies {
-    compile 'com.cleveroad:audiowidget:1.0.0'
+    implementation 'com.cleveroad:audiowidget:1.0.1'
 }
 ```
 This library will add two new permissions to your manifest:
@@ -185,6 +185,8 @@ But make sure that your app has permission to draw over another apps in Android 
 * **OnControlsClickListener.onPlaylistClicked** should return `true` to consume the action or `false` to use default behavior (collapse the widget)
 * **OnControlsClickListener.onPlayPauseClicked** should return `true` to consume the action or `false` to use default behavior (change play/pause state)
 
+## Changelog
+See [changelog history].
 
 <br />
 #### Support ####
@@ -215,3 +217,5 @@ If you have any other questions regarding the use of this library, please contac
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
+
+[changelog history]: /CHANGELOG.md
