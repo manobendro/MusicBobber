@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -22,7 +23,7 @@ import java.util.Random;
 /**
  * Expanded state view.
  */
-@SuppressLint("ViewConstructor")
+@SuppressLint({"ViewConstructor", "AppCompatCustomView"})
 class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackStateListener {
 
 	static final int DIRECTION_LEFT = 1;
@@ -72,8 +73,8 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 	private final float[] bubbleSizes;
 	private final float[] bubbleSpeeds;
 	private final float[] bubblePositions;
-    private final float bubblesMinSize;
-    private final float bubblesMaxSize;
+	private final float bubblesMinSize;
+	private final float bubblesMaxSize;
 	private final Random random;
 	private final Paint bubblesPaint;
 	private final RectF bounds;
@@ -82,12 +83,12 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 	private final ValueAnimator expandAnimator;
 	private final ValueAnimator collapseAnimator;
 	private final Drawable defaultAlbumCover;
-    private final int buttonPadding;
-    private final int prevNextExtraPadding;
-    private final Interpolator accDecInterpolator;
-    private final ValueAnimator touchDownAnimator;
-    private final ValueAnimator touchUpAnimator;
-    private final ValueAnimator bubblesTouchAnimator;
+	private final int buttonPadding;
+	private final int prevNextExtraPadding;
+	private final Interpolator accDecInterpolator;
+	private final ValueAnimator touchDownAnimator;
+	private final ValueAnimator touchUpAnimator;
+	private final ValueAnimator bubblesTouchAnimator;
 
 	private float bubblesTime;
 	private boolean expanded;
@@ -96,43 +97,43 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 	private AudioWidget.OnWidgetStateChangedListener onWidgetStateChangedListener;
 	private int padding;
 	private AudioWidget.OnControlsClickListener onControlsClickListener;
-    private int touchedButtonIndex;
+	private int touchedButtonIndex;
 
-    @Nullable
-    private AnimationProgressListener expandListener;
-    @Nullable
-    private AnimationProgressListener collapseListener;
+	@Nullable
+	private AnimationProgressListener expandListener;
+	@Nullable
+	private AnimationProgressListener collapseListener;
 
 	public ExpandCollapseWidget(@NonNull Configuration configuration) {
 		super(configuration.context());
 		setLayerType(LAYER_TYPE_SOFTWARE, null);
 		this.playbackState = configuration.playbackState();
-        this.accDecInterpolator = configuration.accDecInterpolator();
+		this.accDecInterpolator = configuration.accDecInterpolator();
 		this.random = configuration.random();
 		this.bubblesPaint = new Paint();
 		this.bubblesPaint.setStyle(Paint.Style.FILL);
 		this.bubblesPaint.setAntiAlias(true);
 		this.bubblesPaint.setColor(configuration.expandedColor());
-        this.bubblesPaint.setAlpha(0);
+		this.bubblesPaint.setAlpha(0);
 		this.paint = new Paint();
 		this.paint.setColor(configuration.expandedColor());
 		this.paint.setAntiAlias(true);
 		this.paint.setShadowLayer(
-                configuration.shadowRadius(),
-                configuration.shadowDx(),
-                configuration.shadowDy(),
-                configuration.shadowColor()
-        );
+				configuration.shadowRadius(),
+				configuration.shadowDx(),
+				configuration.shadowDy(),
+				configuration.shadowColor()
+		);
 		this.radius = configuration.radius();
 		this.widgetWidth = configuration.widgetWidth();
 		this.colorChanger = new ColorChanger();
 		this.playColor = configuration.darkColor();
 		this.pauseColor = configuration.lightColor();
 		this.widgetColor = configuration.expandedColor();
-        this.buttonPadding = configuration.buttonPadding();
-        this.prevNextExtraPadding = configuration.prevNextExtraPadding();
-        this.bubblesMinSize = configuration.bubblesMinSize();
-        this.bubblesMaxSize = configuration.bubblesMaxSize();
+		this.buttonPadding = configuration.buttonPadding();
+		this.prevNextExtraPadding = configuration.prevNextExtraPadding();
+		this.bubblesMinSize = configuration.bubblesMinSize();
+		this.bubblesMaxSize = configuration.bubblesMaxSize();
 		this.tmpRect = new Rect();
 		this.buttonBounds = new Rect[5];
 		this.drawables = new Drawable[6];
@@ -153,22 +154,22 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		this.bubblePositions = new float[TOTAL_BUBBLES_COUNT * 2];
 		this.playbackState.addPlaybackStateListener(this);
 
-        this.expandAnimator = ValueAnimator.ofPropertyValuesHolder(
-                PropertyValuesHolder.ofFloat("percent", 0f, 1f),
-                PropertyValuesHolder.ofInt("expandPosition", 0, (int) EXPAND_DURATION_L),
-                PropertyValuesHolder.ofFloat("alpha", 0f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f)
-        ).setDuration(EXPAND_DURATION_L);
+		this.expandAnimator = ValueAnimator.ofPropertyValuesHolder(
+				PropertyValuesHolder.ofFloat("percent", 0f, 1f),
+				PropertyValuesHolder.ofInt("expandPosition", 0, (int) EXPAND_DURATION_L),
+				PropertyValuesHolder.ofFloat("alpha", 0f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f)
+		).setDuration(EXPAND_DURATION_L);
 
-        LinearInterpolator interpolator = new LinearInterpolator();
-        this.expandAnimator.setInterpolator(interpolator);
+		LinearInterpolator interpolator = new LinearInterpolator();
+		this.expandAnimator.setInterpolator(interpolator);
 		this.expandAnimator.addUpdateListener(animation -> {
 			updateExpandAnimation((int) animation.getAnimatedValue("expandPosition"));
-            setAlpha((float) animation.getAnimatedValue("alpha"));
+			setAlpha((float) animation.getAnimatedValue("alpha"));
 			invalidate();
 
-            if(expandListener != null) {
-                expandListener.onValueChanged((float) animation.getAnimatedValue("percent"));
-            }
+			if(expandListener != null) {
+				expandListener.onValueChanged((float) animation.getAnimatedValue("percent"));
+			}
 		});
 		this.expandAnimator.addListener(new AnimatorListenerAdapter() {
 			@Override
@@ -194,19 +195,19 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 			}
 		});
 		this.collapseAnimator = ValueAnimator.ofPropertyValuesHolder(
-                PropertyValuesHolder.ofFloat("percent", 0f, 1f),
-                PropertyValuesHolder.ofInt("expandPosition", 0, (int) COLLAPSE_DURATION_L),
-                PropertyValuesHolder.ofFloat("alpha", 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0f)
-        ).setDuration(COLLAPSE_DURATION_L);
-        this.collapseAnimator.setInterpolator(interpolator);
+				PropertyValuesHolder.ofFloat("percent", 0f, 1f),
+				PropertyValuesHolder.ofInt("expandPosition", 0, (int) COLLAPSE_DURATION_L),
+				PropertyValuesHolder.ofFloat("alpha", 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0f)
+		).setDuration(COLLAPSE_DURATION_L);
+		this.collapseAnimator.setInterpolator(interpolator);
 		this.collapseAnimator.addUpdateListener(animation -> {
 			updateCollapseAnimation((int) animation.getAnimatedValue("expandPosition"));
-            setAlpha((float) animation.getAnimatedValue("alpha"));
+			setAlpha((float) animation.getAnimatedValue("alpha"));
 			invalidate();
 
-            if(collapseListener != null) {
-                collapseListener.onValueChanged((float) animation.getAnimatedValue("percent"));
-            }
+			if(collapseListener != null) {
+				collapseListener.onValueChanged((float) animation.getAnimatedValue("percent"));
+			}
 		});
 		this.collapseAnimator.addListener(new AnimatorListenerAdapter() {
 			@Override
@@ -232,52 +233,56 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 			}
 		});
 		this.padding = configuration.context().getResources().getDimensionPixelSize(R.dimen.aw_expand_collapse_widget_padding);
-        ValueAnimator.AnimatorUpdateListener listener = animation -> {
-            if (touchedButtonIndex == -1 || touchedButtonIndex >= buttonBounds.length) {
-                return;
-            }
-            calculateBounds(touchedButtonIndex, tmpRect);
-            Rect rect = buttonBounds[touchedButtonIndex];
-            float width = tmpRect.width() * (float) animation.getAnimatedValue() / 2;
-            float height = tmpRect.height() * (float) animation.getAnimatedValue() / 2;
-            int l = (int) (tmpRect.centerX() - width);
-            int r = (int) (tmpRect.centerX() + width);
-            int t = (int) (tmpRect.centerY() - height);
-            int b = (int) (tmpRect.centerY() + height);
-            rect.set(l, t, r, b);
-            invalidate(rect);
-        };
-        touchDownAnimator = ValueAnimator.ofFloat(1, 0.9f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
-        touchDownAnimator.addUpdateListener(listener);
-        touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
-        touchUpAnimator.addUpdateListener(listener);
-        bubblesTouchAnimator = ValueAnimator.ofFloat(0, EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F)
-                .setDuration((long) (EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F));
-        bubblesTouchAnimator.setInterpolator(interpolator);
-        bubblesTouchAnimator.addUpdateListener(animation -> {
-            bubblesTime = animation.getAnimatedFraction();
-            bubblesPaint.setAlpha((int) DrawableUtils.customFunction(bubblesTime, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
-            invalidate();
-        });
-        bubblesTouchAnimator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                super.onAnimationStart(animation);
-            }
+		ValueAnimator.AnimatorUpdateListener listener = animation -> {
+			if (touchedButtonIndex == -1 || touchedButtonIndex >= buttonBounds.length) {
+				return;
+			}
+			calculateBounds(touchedButtonIndex, tmpRect);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+				invalidate();
+				return;
+			}
+			Rect rect = buttonBounds[touchedButtonIndex];
+			float width = tmpRect.width() * (float) animation.getAnimatedValue() / 2;
+			float height = tmpRect.height() * (float) animation.getAnimatedValue() / 2;
+			int l = (int) (tmpRect.centerX() - width);
+			int r = (int) (tmpRect.centerX() + width);
+			int t = (int) (tmpRect.centerY() - height);
+			int b = (int) (tmpRect.centerY() + height);
+			rect.set(l, t, r, b);
+			invalidate(rect);
+		};
+		touchDownAnimator = ValueAnimator.ofFloat(1, 0.9f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
+		touchDownAnimator.addUpdateListener(listener);
+		touchUpAnimator = ValueAnimator.ofFloat(0.9f, 1f).setDuration(Configuration.TOUCH_ANIMATION_DURATION);
+		touchUpAnimator.addUpdateListener(listener);
+		bubblesTouchAnimator = ValueAnimator.ofFloat(0, EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F)
+				.setDuration((long) (EXPAND_BUBBLES_END_F - EXPAND_BUBBLES_START_F));
+		bubblesTouchAnimator.setInterpolator(interpolator);
+		bubblesTouchAnimator.addUpdateListener(animation -> {
+			bubblesTime = animation.getAnimatedFraction();
+			bubblesPaint.setAlpha((int) DrawableUtils.customFunction(bubblesTime, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
+			invalidate();
+		});
+		bubblesTouchAnimator.addListener(new AnimatorListenerAdapter() {
+			@Override
+			public void onAnimationStart(Animator animation) {
+				super.onAnimationStart(animation);
+			}
 
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                bubblesTime = 0;
-            }
+			@Override
+			public void onAnimationEnd(Animator animation) {
+				super.onAnimationEnd(animation);
+				bubblesTime = 0;
+			}
 
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                super.onAnimationCancel(animation);
-                bubblesTime = 0;
-            }
-        });
-    }
+			@Override
+			public void onAnimationCancel(Animator animation) {
+				super.onAnimationCancel(animation);
+				bubblesTime = 0;
+			}
+		});
+	}
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -330,7 +335,7 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		}
 		if (DrawableUtils.isBetween(position, 0, EXPAND_SIZE_END_F)) {
 			float time = DrawableUtils.normalize(position, 0, EXPAND_SIZE_END_F);
-            time = accDecInterpolator.getInterpolation(time);
+			time = accDecInterpolator.getInterpolation(time);
 			float l, r, t, b;
 			float height = radius * 2;
 			t = radius;
@@ -371,7 +376,7 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		}
 		if (DrawableUtils.isBetween(position, EXPAND_POSITION_START_F, EXPAND_POSITION_END_F)) {
 			float time = DrawableUtils.normalize(position, EXPAND_POSITION_START_F, EXPAND_POSITION_END_F);
-            time = accDecInterpolator.getInterpolation(time);
+			time = accDecInterpolator.getInterpolation(time);
 			Rect playBounds = buttonBounds[INDEX_PLAY];
 			calculateBounds(INDEX_PLAY, playBounds);
 			int l, t, r, b;
@@ -394,18 +399,18 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 			float time = DrawableUtils.normalize(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F);
 			bubblesPaint.setAlpha((int) DrawableUtils.customFunction(time, 0, 0, 255, 0.33f, 255, 0.66f, 0, 1f));
 		} else {
-            bubblesPaint.setAlpha(0);
-        }
-        if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
+			bubblesPaint.setAlpha(0);
+		}
+		if (DrawableUtils.isBetween(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F)) {
 			bubblesTime = DrawableUtils.normalize(position, EXPAND_BUBBLES_START_F, EXPAND_BUBBLES_END_F);
 		}
 	}
 
 	private void calculateBounds(int index, Rect bounds) {
-        int padding = buttonPadding;
-        if (index == INDEX_PREV || index == INDEX_NEXT) {
-            padding += prevNextExtraPadding;
-        }
+		int padding = buttonPadding;
+		if (index == INDEX_PREV || index == INDEX_NEXT) {
+			padding += prevNextExtraPadding;
+		}
 		calculateBounds(index, bounds, padding);
 	}
 
@@ -431,7 +436,7 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		}
 		if (DrawableUtils.isBetween(position, COLLAPSE_POSITION_START_F, COLLAPSE_POSITION_END_F)) {
 			float time = DrawableUtils.normalize(position, COLLAPSE_POSITION_START_F, COLLAPSE_POSITION_END_F);
-            time = accDecInterpolator.getInterpolation(time);
+			time = accDecInterpolator.getInterpolation(time);
 			Rect playBounds = buttonBounds[INDEX_PLAY];
 			calculateBounds(INDEX_PLAY, playBounds);
 			int l, t, r, b;
@@ -450,7 +455,7 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		}
 		if (DrawableUtils.isBetween(position, COLLAPSE_SIZE_START_F, COLLAPSE_SIZE_END_F)) {
 			float time = DrawableUtils.normalize(position, COLLAPSE_SIZE_START_F, COLLAPSE_SIZE_END_F);
-            time = accDecInterpolator.getInterpolation(time);
+			time = accDecInterpolator.getInterpolation(time);
 			paint.setColor(colorChanger.nextColor(time));
 			float l, r, t, b;
 			float height = radius * 2;
@@ -469,12 +474,12 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 
 	private void expandCollapseElements(float time) {
 		int alpha = (int) DrawableUtils.between(time * 255, 0, 255);
-        for (int i = 0; i < buttonBounds.length; i++) {
-            if (i != INDEX_PLAY) {
-                int padding = buttonPadding;
-                if (i == INDEX_PREV || i == INDEX_NEXT) {
-                    padding += prevNextExtraPadding;
-                }
+		for (int i = 0; i < buttonBounds.length; i++) {
+			if (i != INDEX_PLAY) {
+				int padding = buttonPadding;
+				if (i == INDEX_PREV || i == INDEX_NEXT) {
+					padding += prevNextExtraPadding;
+				}
 				calculateBounds(i, buttonBounds[i]);
 				float size = time * (sizeStep / 2f - padding);
 				int cx = buttonBounds[i].centerX();
@@ -488,13 +493,13 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 	public void onClick(float x, float y) {
 		if (isAnimationInProgress())
 			return;
-        int index = getTouchedAreaIndex((int) x, (int) y);
-        if (index == INDEX_PLAY || index == INDEX_PREV || index == INDEX_NEXT) {
-            if (!bubblesTouchAnimator.isRunning()) {
-                randomizeBubblesPosition();
-                bubblesTouchAnimator.start();
-            }
-        }
+		int index = getTouchedAreaIndex((int) x, (int) y);
+		if (index == INDEX_PLAY || index == INDEX_PREV || index == INDEX_NEXT) {
+			if (!bubblesTouchAnimator.isRunning()) {
+				randomizeBubblesPosition();
+				bubblesTouchAnimator.start();
+			}
+		}
 		switch (index) {
 			case INDEX_PLAYLIST: {
 				if (onControlsClickListener != null) {
@@ -533,64 +538,64 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		}
 	}
 
-    public void onLongClick(float x, float y) {
-        if (isAnimationInProgress())
-            return;
-        int index = getTouchedAreaIndex((int) x, (int) y);
-        switch (index) {
-            case INDEX_PLAYLIST: {
-                if (onControlsClickListener != null) {
-                    onControlsClickListener.onPlaylistLongClicked();
-                }
-                break;
-            }
-            case INDEX_PREV: {
-                if (onControlsClickListener != null) {
-                    onControlsClickListener.onPreviousLongClicked();
-                }
-                break;
-            }
-            case INDEX_PLAY: {
-                if (onControlsClickListener != null) {
-                    onControlsClickListener.onPlayPauseLongClicked();
-                }
-                break;
-            }
-            case INDEX_NEXT: {
-                if (onControlsClickListener != null) {
-                    onControlsClickListener.onNextLongClicked();
-                }
-                break;
-            }
-            case INDEX_ALBUM: {
-                if (onControlsClickListener != null) {
-                    onControlsClickListener.onAlbumLongClicked();
-                }
-                break;
-            }
-            default: {
-                Log.w(ExpandCollapseWidget.class.getSimpleName(), "Unknown index: " + index);
-                break;
-            }
-        }
-    }
+	public void onLongClick(float x, float y) {
+		if (isAnimationInProgress())
+			return;
+		int index = getTouchedAreaIndex((int) x, (int) y);
+		switch (index) {
+			case INDEX_PLAYLIST: {
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onPlaylistLongClicked();
+				}
+				break;
+			}
+			case INDEX_PREV: {
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onPreviousLongClicked();
+				}
+				break;
+			}
+			case INDEX_PLAY: {
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onPlayPauseLongClicked();
+				}
+				break;
+			}
+			case INDEX_NEXT: {
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onNextLongClicked();
+				}
+				break;
+			}
+			case INDEX_ALBUM: {
+				if (onControlsClickListener != null) {
+					onControlsClickListener.onAlbumLongClicked();
+				}
+				break;
+			}
+			default: {
+				Log.w(ExpandCollapseWidget.class.getSimpleName(), "Unknown index: " + index);
+				break;
+			}
+		}
+	}
 
-    private int getTouchedAreaIndex(int x, int y) {
-        int index = -1;
-        for (int i = 0; i < buttonBounds.length; i++) {
-            calculateBounds(i, tmpRect, 0);
-            if (tmpRect.contains(x, y)) {
-                index = i;
-                break;
-            }
-        }
-        return index;
-    }
+	private int getTouchedAreaIndex(int x, int y) {
+		int index = -1;
+		for (int i = 0; i < buttonBounds.length; i++) {
+			calculateBounds(i, tmpRect, 0);
+			if (tmpRect.contains(x, y)) {
+				index = i;
+				break;
+			}
+		}
+		return index;
+	}
 
-    public void expand(int expandDirection) {
+	public void expand(int expandDirection) {
 		if (expanded) {
-            return;
-        }
+			return;
+		}
 		this.expandDirection = expandDirection;
 		startExpandAnimation();
 	}
@@ -609,28 +614,28 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 					.fromColor(pauseColor)
 					.toColor(widgetColor);
 		}
-        randomizeBubblesPosition();
+		randomizeBubblesPosition();
 		expandAnimator.start();
 	}
 
-    private void randomizeBubblesPosition() {
-        int half = TOTAL_BUBBLES_COUNT / 2;
-        float step = widgetWidth / half;
-        for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
-            int index = i % half;
-            float speed = 0.3f + 0.7f * random.nextFloat();
-            float size = bubblesMinSize + (bubblesMaxSize - bubblesMinSize) * random.nextFloat();
-            float radius = size / 2f;
-            float cx = padding + index * step + step * random.nextFloat() * (random.nextBoolean() ? 1 : -1);
-            float cy = widgetHeight + padding;
-            bubbleSpeeds[i] = speed;
-            bubbleSizes[i] = radius;
-            bubblePositions[2 * i] = cx;
-            bubblePositions[2 * i + 1] = cy;
-        }
-    }
+	private void randomizeBubblesPosition() {
+		int half = TOTAL_BUBBLES_COUNT / 2;
+		float step = widgetWidth / half;
+		for (int i = 0; i < TOTAL_BUBBLES_COUNT; i++) {
+			int index = i % half;
+			float speed = 0.3f + 0.7f * random.nextFloat();
+			float size = bubblesMinSize + (bubblesMaxSize - bubblesMinSize) * random.nextFloat();
+			float radius = size / 2f;
+			float cx = padding + index * step + step * random.nextFloat() * (random.nextBoolean() ? 1 : -1);
+			float cy = widgetHeight + padding;
+			bubbleSpeeds[i] = speed;
+			bubbleSizes[i] = radius;
+			bubblePositions[2 * i] = cx;
+			bubblePositions[2 * i + 1] = cy;
+		}
+	}
 
-    private void startCollapseAnimation() {
+	private void startCollapseAnimation() {
 		if (isAnimationInProgress()) {
 			return;
 		}
@@ -655,7 +660,7 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 					.toColor(pauseColor);
 		}
 		startCollapseAnimation();
-        return true;
+		return true;
 	}
 
 	@Override
@@ -677,9 +682,9 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 		return expandDirection;
 	}
 
-    public void expandDirection(int expandDirection) {
-        this.expandDirection = expandDirection;
-    }
+	public void expandDirection(int expandDirection) {
+		this.expandDirection = expandDirection;
+	}
 
 	public void onControlsClickListener(AudioWidget.OnControlsClickListener onControlsClickListener) {
 		this.onControlsClickListener = onControlsClickListener;
@@ -696,75 +701,79 @@ class ExpandCollapseWidget extends ImageView implements PlaybackState.PlaybackSt
 			else
 				drawables[INDEX_ALBUM] = albumCover;
 		}
-		Rect bounds = buttonBounds[INDEX_ALBUM];
-		invalidate(bounds.left, bounds.top, bounds.right, bounds.bottom);
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+			Rect bounds = buttonBounds[INDEX_ALBUM];
+			invalidate(bounds.left, bounds.top, bounds.right, bounds.bottom);
+		} else {
+			invalidate();
+		}
 	}
 
-    public void onTouched(float x, float y) {
-        int index = getTouchedAreaIndex((int) x, (int) y);
-        if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
-            touchedButtonIndex = index;
-            touchDownAnimator.start();
-        }
-    }
+	public void onTouched(float x, float y) {
+		int index = getTouchedAreaIndex((int) x, (int) y);
+		if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
+			touchedButtonIndex = index;
+			touchDownAnimator.start();
+		}
+	}
 
-    public void onReleased(float x, float y) {
-        int index = getTouchedAreaIndex((int) x, (int) y);
-        if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
-            touchedButtonIndex = index;
-            touchUpAnimator.start();
-        }
-    }
+	public void onReleased(float x, float y) {
+		int index = getTouchedAreaIndex((int) x, (int) y);
+		if (index == INDEX_PLAY || index == INDEX_NEXT || index == INDEX_PREV) {
+			touchedButtonIndex = index;
+			touchUpAnimator.start();
+		}
+	}
 
-    public TouchManager.BoundsChecker newBoundsChecker(int offsetX, int offsetY) {
-        return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight, offsetX, offsetY);
-    }
+	public TouchManager.BoundsChecker newBoundsChecker(int offsetX, int offsetY) {
+		return new BoundsCheckerImpl(radius, padding, widgetWidth, widgetHeight, offsetX, offsetY);
+	}
 
-    public void setCollapseListener(@Nullable AnimationProgressListener collapseListener) {
-        this.collapseListener = collapseListener;
-    }
+	public void setCollapseListener(@Nullable AnimationProgressListener collapseListener) {
+		this.collapseListener = collapseListener;
+	}
 
-    public void setExpandListener(@Nullable AnimationProgressListener expandListener) {
-        this.expandListener = expandListener;
-    }
+	public void setExpandListener(@Nullable AnimationProgressListener expandListener) {
+		this.expandListener = expandListener;
+	}
 
-    interface AnimationProgressListener {
-        void onValueChanged(float percent);
-    }
+	interface AnimationProgressListener {
+		void onValueChanged(float percent);
+	}
 
-    private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {
+	private static final class BoundsCheckerImpl extends AudioWidget.BoundsCheckerWithOffset {
 
-        private float radius;
-        private float padding;
-        private float widgetWidth;
-        private float widgetHeight;
+		private float radius;
+		private float padding;
+		private float widgetWidth;
+		private float widgetHeight;
 
-        BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight, int offsetX, int offsetY) {
-            super(offsetX, offsetY);
-            this.radius = radius;
-            this.padding = padding;
-            this.widgetWidth = widgetWidth;
-            this.widgetHeight = widgetHeight;
-        }
+		BoundsCheckerImpl(float radius, float padding, float widgetWidth, float widgetHeight, int offsetX, int offsetY) {
+			super(offsetX, offsetY);
+			this.radius = radius;
+			this.padding = padding;
+			this.widgetWidth = widgetWidth;
+			this.widgetHeight = widgetHeight;
+		}
 
-        @Override
-        public float stickyLeftSideImpl(float screenWidth) {
-            return 0;
-        }
+		@Override
+		public float stickyLeftSideImpl(float screenWidth) {
+			return 0;
+		}
 
-        @Override
-        public float stickyRightSideImpl(float screenWidth) {
-            return screenWidth - widgetWidth;
-        }
+		@Override
+		public float stickyRightSideImpl(float screenWidth) {
+			return screenWidth - widgetWidth;
+		}
 
-        @Override
-        public float stickyBottomSideImpl(float screenHeight) {
-            return screenHeight - 3 * radius;
-        }
+		@Override
+		public float stickyBottomSideImpl(float screenHeight) {
+			return screenHeight - 3 * radius;
+		}
 
-        @Override
-        public float stickyTopSideImpl(float screenHeight) {
-            return -radius;
-        }
-    }
+		@Override
+		public float stickyTopSideImpl(float screenHeight) {
+			return -radius;
+		}
+	}
 }

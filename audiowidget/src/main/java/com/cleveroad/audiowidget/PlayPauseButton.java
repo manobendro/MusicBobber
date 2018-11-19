@@ -25,7 +25,7 @@ import java.util.Random;
 /**
  * Collapsed state view.
  */
-@SuppressLint("ViewConstructor")
+@SuppressLint({"ViewConstructor", "AppCompatCustomView"})
 class PlayPauseButton extends ImageView implements PlaybackState.PlaybackStateListener {
 
 	private static final float BUBBLES_ANGLE_STEP = 18.0f;

@@ -3,6 +3,7 @@ package com.cleveroad.audiowidget;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Paint;
@@ -509,6 +510,14 @@ public class AudioWidget {
     }
 
     private void show(View view, int left, int top) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            preOreoShow(view, left, top);
+        } else {
+            oreoShow(view, left, top);
+        }
+    }
+
+    private void preOreoShow(View view, int left, int top) {
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -518,6 +527,25 @@ public class AudioWidget {
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
+        params.gravity = Gravity.START | Gravity.TOP;
+        params.x = left;
+        params.y = top;
+        windowManager.addView(view, params);
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private void oreoShow(View view, int left, int top) {
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT);
+
+
         params.gravity = Gravity.START | Gravity.TOP;
         params.x = left;
         params.y = top;
