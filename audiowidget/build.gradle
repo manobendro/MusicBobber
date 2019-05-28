@@ -1,15 +1,13 @@
 apply plugin: 'com.android.library'
-apply plugin: 'me.tatarka.retrolambda'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "28.0.3"
+    compileSdkVersion rootProject.ext.compileSdkVersion as Integer
 
     defaultConfig {
-        minSdkVersion 12
-        targetSdkVersion 28
-        versionCode 11
-        versionName "1.0.1"
+        minSdkVersion rootProject.ext.minSdkVersion as Integer
+        targetSdkVersion rootProject.ext.targetSdkVersion as Integer
+        versionCode 12
+        versionName "1.0.2"
     }
     buildTypes {
         release {
@@ -27,14 +25,9 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    //versions
-    final SUPPORT_LIB_VERSION = '28.0.0'
-
     testImplementation 'junit:junit:4.12'
-    //noinspection GradleCompatible
-    implementation "com.android.support:appcompat-v7:$SUPPORT_LIB_VERSION"
-    //noinspection GradleCompatible
-    implementation "com.android.support:palette-v7:$SUPPORT_LIB_VERSION"
-}
 
-//apply from: './gradle-mvn-push.gradle'
+    // Support
+    implementation rootProject.ext.supportDependencies.palette
+    implementation rootProject.ext.supportDependencies.appCompat
+}

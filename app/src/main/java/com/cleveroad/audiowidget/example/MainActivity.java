@@ -11,26 +11,25 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.Loader;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.MenuItemCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.Collection;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Collection<MusicItem>>,
         SearchView.OnQueryTextListener {
@@ -39,12 +38,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final int OVERLAY_PERMISSION_REQ_CODE = 1;
     private static final int EXT_STORAGE_PERMISSION_REQ_CODE = 2;
 
-    @Bind(R.id.recycler_view)
-    RecyclerView recyclerView;
-
-    @Bind(R.id.empty_view)
-    View emptyView;
-
     private MusicAdapter adapter;
     private EmptyViewObserver emptyViewObserver;
 
@@ -52,24 +45,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        View emptyView = findViewById(R.id.empty_view);
         adapter = new MusicAdapter(this);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         recyclerView.setAdapter(adapter);
         emptyViewObserver = new EmptyViewObserver(emptyView);
         emptyViewObserver.bind(recyclerView);
         MusicFilter filter = new MusicFilter(ContextCompat.getColor(this, R.color.colorAccent));
         adapter.withFilter(filter);
         ItemClickSupport.addTo(recyclerView)
-                .setOnItemClickListener(new ItemClickSupport.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(RecyclerView parent, View view, int position, long id) {
-                        MusicItem item = adapter.getItem(position);
-                        if (!isServiceRunning(MusicService.class)) {
-                            MusicService.setTracks(MainActivity.this, adapter.getSnapshot().toArray(new MusicItem[adapter.getNonFilteredCount()]));
-                        }
-                        MusicService.playTrack(MainActivity.this, item);
+                .setOnItemClickListener((parent, view, position, id) -> {
+                    MusicItem item = adapter.getItem(position);
+                    if (!isServiceRunning(MusicService.class)) {
+                        MusicService.setTracks(MainActivity.this, adapter.getSnapshot().toArray(new MusicItem[adapter.getNonFilteredCount()]));
                     }
+                    MusicService.playTrack(MainActivity.this, item);
                 });
 
         // check if we can draw overlays

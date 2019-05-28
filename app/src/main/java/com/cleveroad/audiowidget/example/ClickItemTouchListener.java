@@ -2,17 +2,17 @@ package com.cleveroad.audiowidget.example;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.OnItemTouchListener;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.recyclerview.widget.RecyclerView;
+
 /**
  * Helper class for detecting click on RecyclerView's item
  */
-abstract class ClickItemTouchListener implements OnItemTouchListener {
+abstract class ClickItemTouchListener implements RecyclerView.OnItemTouchListener {
 
     private final GestureDetector mGestureDetector;
 

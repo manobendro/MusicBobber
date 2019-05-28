@@ -12,14 +12,16 @@ import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.cleveroad.audiowidget.AudioWidget;
 
 import java.io.IOException;
@@ -28,8 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 /**
  * Simple implementation of music service.
@@ -54,7 +54,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private int playingIndex = -1;
     private boolean paused;
     private Timer timer;
-    private CropCircleTransformation cropCircleTransformation;
     private SharedPreferences preferences;
 
 
@@ -94,7 +93,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         audioWidget = new AudioWidget.Builder(this).build();
         audioWidget.controller().onControlsClickListener(this);
         audioWidget.controller().onWidgetStateChangedListener(this);
-        cropCircleTransformation = new CropCircleTransformation(this);
     }
 
     @Override
@@ -198,7 +196,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         mediaPlayer.release();
         mediaPlayer = null;
         stopTrackingPosition();
-        cropCircleTransformation = null;
         preferences = null;
         super.onDestroy();
     }
@@ -217,24 +214,24 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         startTrackingPosition();
         int size = getResources().getDimensionPixelSize(R.dimen.cover_size);
         Glide.with(this)
-                .load(items.get(playingIndex).albumArtUri())
                 .asBitmap()
+                .load(items.get(playingIndex).albumArtUri())
                 .override(size, size)
                 .centerCrop()
-                .transform(cropCircleTransformation)
+                .apply((new RequestOptions()).circleCrop())
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
-                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        super.onLoadFailed(errorDrawable);
                         if (audioWidget != null) {
-                            audioWidget.controller().albumCoverBitmap(resource);
+                            audioWidget.controller().albumCover(null);
                         }
                     }
 
                     @Override
-                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                        super.onLoadFailed(e, errorDrawable);
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         if (audioWidget != null) {
-                            audioWidget.controller().albumCover(null);
+                            audioWidget.controller().albumCoverBitmap(resource);
                         }
                     }
                 });
@@ -295,7 +292,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public boolean onPlayPauseClicked() {
-        if(playingIndex == -1) {
+        if (playingIndex == -1) {
             Toast.makeText(this, R.string.song_not_selected, Toast.LENGTH_SHORT).show();
             return true;
         }
