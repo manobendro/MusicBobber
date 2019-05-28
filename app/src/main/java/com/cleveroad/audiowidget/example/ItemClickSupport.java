@@ -1,9 +1,10 @@
 package com.cleveroad.audiowidget.example;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.HapticFeedbackConstants;
 import android.view.SoundEffectConstants;
 import android.view.View;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 class ItemClickSupport {
     /**

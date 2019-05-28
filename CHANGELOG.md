@@ -22,3 +22,4 @@ Our invention can facilitate the user’s interaction with a music player and ni
 Version | Changes
 ---     | ---
 v.1.0.1 | <ul><li>Updated version of the support libraries</li><li>Updated version of the build tools</li><li>Fix issue #20 https://github.com/Cleveroad/MusicBobber/issues/20</li></ul>
+v.1.0.2 | <ul><li>Migrate library to AndroidX</li><li>Updated version of the build tools</li>
